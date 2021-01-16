@@ -1,4 +1,4 @@
-# teensy cmake marcos
+# teensy cmake macros
 
 ``` cmake
 cmake_minimum_required(VERSION 3.10)
