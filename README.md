@@ -1,4 +1,9 @@
 # teensy cmake macros
+installable cmake package containing macros to allow you to compile teensy code easily using cmake and arm-none-eabi-gcc
+once installed, just add below to your `CMakeLists.txt`
+```cmake 
+find_package(teensy_cmake_macros)
+``` 
 
 ## download and install
 ```shell
