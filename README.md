@@ -1,10 +1,29 @@
 # teensy cmake macros
 installable cmake package containing macros to allow you to compile teensy code easily using cmake and arm-none-eabi-gcc
-once installed, just add below to your `CMakeLists.txt`
+
+once installed, just add below line to your `CMakeLists.txt`
 ```cmake 
 find_package(teensy_cmake_macros)
 ``` 
 
+* teensy_add_executable( TARGET files... )
+  ```cmake 
+  teensy_add_executable(basic midiread.cpp)
+  ``` 
+* import_arduino_library ( LibraryPath LibraryName )
+  ```cmake 
+  import_arduino_library(${DEPSPATH} SPI)
+  ``` 
+* import_arduino_library_absolute (LibraryPath)
+  ```cmake 
+  import_arduino_library_absolute(${DEPSPATH}/SPI)
+  ``` 
+* ~~teensy_remove_sources ( PathToRemoveAllFilesFromSOURCE )~~ 
+  * left as a reference (was handy when I was recursively adding source code folders, needed to un-add certain folders like **/examples/)
+  ```cmake 
+  teensy_remove_sources(${DEPSPATH}/Audio/examples)
+  ```
+  
 ## download and install
 ```shell
 > git clone https://github.com/newdigate/teensy-cmake-macros.git
