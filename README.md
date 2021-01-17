@@ -1,10 +1,21 @@
 # teensy cmake macros
 
+## download and install
+```shell
+> git clone https://github.com/newdigate/teensy-cmake-macros.git
+> cd teensy-cmake-macros
+> mkdir cmake-build-debug
+> cd cmake-build-debug
+> cmake ..
+> sudo make install        
+```
+
+## example usage
+* set *DEPSPATH*, *COMPILERPATH*, *TEENSY_VERSION*, *CPU_CORE_SPEED*, *CPU*
 ``` cmake
 cmake_minimum_required(VERSION 3.10)
 project(basic C CXX)
 set(CMAKE_CXX_STANDARD 11)
-# This toolchain file is based on https://github.com/apmorton/teensy-template
 set(TEENSY_VERSION 40 CACHE STRING "Set to the Teensy version corresponding to your board (30 or 31 allowed)" FORCE)
 set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
 set(CPU cortex-m7)
@@ -15,6 +26,7 @@ set(COREPATH "${DEPSPATH}/cores/teensy4/")
 # teensy_cmake_macros: https://github.com/newdigate/teensy-cmake-macros
 find_package(teensy_cmake_macros)
 
+# include header files and source files (non-recursive)
 import_arduino_library(${DEPSPATH} SPI)
 import_arduino_library(${DEPSPATH} SdFat/src)
 import_arduino_library(${DEPSPATH} SdFat/src/common)
@@ -27,5 +39,6 @@ import_arduino_library(${DEPSPATH} SdFat/src/SdCard)
 import_arduino_library(${DEPSPATH} SdFat/src/SpiDriver)
 import_arduino_library(${DEPSPATH} SD/src)
 
+# add targets to create teensy firmware .o, .hex file
 teensy_add_executable(basic midiread.cpp)
 ```
