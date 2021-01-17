@@ -42,3 +42,7 @@ import_arduino_library(${DEPSPATH} SD/src)
 # add targets to create teensy firmware .o, .hex file
 teensy_add_executable(basic midiread.cpp)
 ```
+
+## used in
+* [midi-smf-reader](https://github.com/newdigate/midi-smf-reader)
+* [teensy-quencer](https://github.com/newdigate/teensy-quencer)
