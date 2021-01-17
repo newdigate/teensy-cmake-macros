@@ -1,5 +1,5 @@
 # teensy cmake macros
-installable cmake package containing macros to allow you to compile teensy code easily using cmake and arm-none-eabi-gcc
+installable cmake package containing macros to allow you to compile teensy code easily using cmake and gcc-arm-none-eabi
 
 once installed, just add below line to your `CMakeLists.txt`
 ```cmake 
@@ -23,6 +23,9 @@ find_package(teensy_cmake_macros)
   ```cmake 
   teensy_remove_sources(${DEPSPATH}/Audio/examples)
   ```
+## dependencies
+* [CMake](https://cmake.org)
+* [gcc-arm-none-eabi](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
   
 ## download and install
 ```shell
