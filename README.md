@@ -6,6 +6,13 @@ once installed, just add below line to your `CMakeLists.txt`
 find_package(teensy_cmake_macros)
 ``` 
 
+* [teensy_cmake_macros](#teensy_cmake_macros)
+* [dependencies](#dependencies)
+* [download and install](#download-and-install)
+* [example usage](#example-usage)
+* [used in](#used-in)
+
+## teensy_cmake_macros 
 * teensy_add_executable( TARGET files... )
   ```cmake 
   teensy_add_executable(basic midiread.cpp)
