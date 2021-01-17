@@ -1,5 +1,5 @@
 # teensy cmake macros
-installable cmake package containing macros to compile teensy code using cmake and gcc-arm-none-eabi
+installable cmake package containing macros to compile teensy firmware using cmake and gcc-arm-none-eabi
 
 once installed, just add below line to your `CMakeLists.txt`
 ```cmake 
