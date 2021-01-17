@@ -15,7 +15,7 @@ find_package(teensy_cmake_macros)
 ## teensy_cmake_macros 
 * teensy_add_executable( TARGET files... )
   ```cmake 
-  teensy_add_executable(basic midiread.cpp)
+  teensy_add_executable(myapplication midiread.cpp)
   ``` 
 * import_arduino_library ( LibraryPath LibraryName )
   ```cmake 
