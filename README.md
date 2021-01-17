@@ -19,7 +19,8 @@ find_package(teensy_cmake_macros)
   import_arduino_library_absolute(${DEPSPATH}/SPI)
   ``` 
 * ~~teensy_remove_sources ( PathToRemoveAllFilesFromSOURCE )~~ 
-  * left as a reference (was handy when I was recursively adding source code folders, needed to un-add certain folders like **/examples/)
+  * left as a reference 
+  * handy recursively adding source folders, need to recursively un-add certain folders
   ```cmake 
   teensy_remove_sources(${DEPSPATH}/Audio/examples)
   ```
