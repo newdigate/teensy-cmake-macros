@@ -104,6 +104,18 @@ function(teensy_add_executable TARGET)
     add_custom_target(${TARGET}_hex ALL DEPENDS ${TARGET}.hex)
 endfunction()
 
+function(teensy_add_library TARGET)
+    set(ELFTARGET ${TARGET}.o)
+    message(STATUS "teensy_add_library ${ELFTARGET} : ${ARGN} : ${TEENSY_SOURCES} ${TEENSY_LIB_SOURCES}")
+
+    add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_SOURCES})
+
+    set_target_properties(${ELFTARGET} PROPERTIES COMPILE_FLAGS "-Wall -g -Os -mcpu=${CPU} -mthumb -MMD -fno-exceptions -fno-rtti")
+    set_target_properties(${ELFTARGET} PROPERTIES COMPILE_DEFINITIONS "${TEENSY_DEFINITIONS} ${INCLUDE_DIRECTORIES} -D__arm__ ")
+    set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES "${COREPATH}")
+    set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "-O -Wl,--gc-sections,--defsym=__rtc_localtime=0 --specs=nano.specs -mcpu=${CPU} -mthumb -T${LINKER_FILE}")
+endfunction()
+
 macro(import_arduino_library LIB_ROOT LIB_NAME)
     # Check if we can find the library.
     if(NOT EXISTS ${LIB_ROOT})
