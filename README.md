@@ -1,6 +1,8 @@
 # teensy cmake macros
 installable cmake package containing macros to cross compile teensy firmware using cmake and gcc-arm-none-eabi
 
+* original repo [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
+
 once installed, just add below line to your `CMakeLists.txt`
 ```cmake 
 find_package(teensy_cmake_macros)
