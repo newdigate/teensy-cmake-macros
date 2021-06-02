@@ -38,7 +38,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # Additional C and CPP files for Arduino support
 #
 #message(STATUS "PROJECT_NAME: ${PROJECT_NAME}")
-set(CPP_COMPILE_FLAGS "-felide-constructors -std=gnu++0x")
+set(CPP_COMPILE_FLAGS "-felide-constructors -std=gnu++0x -fno-rtti")
 set(C_COMPILE_FLAGS "-nostdlib")
 
 file(GLOB_RECURSE TEENSY_C_FILES ABSOLUTE ${COREPATH}**.c)
@@ -90,7 +90,7 @@ function(teensy_add_executable TARGET)
     #message("mm ${ELFTARGET} ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_SOURCES}")
     add_executable(${ELFTARGET} ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_SOURCES})
 
-    set_target_properties(${ELFTARGET} PROPERTIES COMPILE_FLAGS "-Wall -g -Os -mcpu=${CPU} -mthumb -MMD -fno-exceptions -fno-rtti")
+    set_target_properties(${ELFTARGET} PROPERTIES COMPILE_FLAGS "-Wall -g -Os -mcpu=${CPU} -mthumb -MMD -fno-exceptions")
     set_target_properties(${ELFTARGET} PROPERTIES COMPILE_DEFINITIONS "${TEENSY_DEFINITIONS} ${INCLUDE_DIRECTORIES} -D__arm__ ")
     set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES "${COREPATH}")
     set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "-O -Wl,--gc-sections,--defsym=__rtc_localtime=0 --specs=nano.specs -mcpu=${CPU} -mthumb -T${LINKER_FILE}")
