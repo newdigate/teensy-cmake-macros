@@ -2,6 +2,7 @@ name: teensy-cmake-test
 on:
   push:
     paths:
+      - '**'
       - '!**.md'
 
 jobs:
