@@ -5,12 +5,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 set(CMAKE_C_COMPILER ${COMPILERPATH}arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER ${COMPILERPATH}arm-none-eabi-g++)
-set(CMAKE_AUTOGEN_VERBOSE 1)
-set(CMAKE_VERBOSE_MAKEFILE 1)
-
-set(CMAKE_DEPFILE_FLAGS_C "<DEP_FILE>")
-set(CMAKE_DEPFILE_FLAGS_CXX "<DEP_FILE>")
-
 # This toolchain file is based on https://github.com/apmorton/teensy-template/blob/master/Makefile
 # and on the Teensy Makefile.
 
