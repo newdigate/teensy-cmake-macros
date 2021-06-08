@@ -1,5 +1,4 @@
-name: example-cv-out
-
+name: teensy-cmake-test
 on:
   push:
     paths:
