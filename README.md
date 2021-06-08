@@ -1,4 +1,4 @@
-# teensy cmake macros
+# teensy cmake macros [![teensy-cmake-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml)
 installable cmake package containing macros to cross compile teensy firmware using cmake and gcc-arm-none-eabi
 
 * original repo [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
