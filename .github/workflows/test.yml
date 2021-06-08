@@ -1,5 +1,10 @@
 name: example-cv-out
 
+on:
+  push:
+    paths:
+      - '!**.md'
+
 jobs:
   build:
 
