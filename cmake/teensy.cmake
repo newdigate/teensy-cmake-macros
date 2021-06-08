@@ -109,9 +109,6 @@ set(C_COMPILE_FLAGS     "${build_flags_optimize} ${build_flags_common} ${build_f
 set(S_COMPILE_FLAGS     "${build_flags_optimize} ${build_flags_common} ${build_flags_dep} ${build_flags_s} ${build_flags_cpu} ${build_flags_defs} -DARDUINO=${arduino_ide_version} -DARDUINO_${build_board} -DF_CPU=${build_fcpu} -D${build_usbtype} -DLAYOUT_${build_keylayout}")
 set(LINK_FLAGS          "${build_flags_optimize} ${build_flags_ld} ${build_flags_ldspecs} ${build_flags_cpu} -T${LINKER_FILE} ${build_flags_libs}")
 
-#set(CMAKE_CXX_LINK_EXECUTABLE "${build_toolchain}/${build_command_linker} ${LINK_FLAGS}")
-#SET(CMAKE_CXX_LINK_EXECUTABLE  "${build_toolchain}/${build_command_linker} <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES>")
-#SET(CMAKE_CXX_LINK_EXECUTABLE  "${build_toolchain}/${build_command_linker} <LINK_FLAGS> <FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES>")
 
 # where is the target environment
 file(GLOB_RECURSE TEENSY_C_FILES ABSOLUTE ${COREPATH}**.c)
@@ -130,29 +127,27 @@ set(TEENSY_SOURCES ${TEENSY_C_FILES} ${TEENSY_CPP_FILES})
 function(teensy_add_executable TARGET)
     set(ELFTARGET ${TARGET}.o)
     
-    file(GLOB TEST_SOURCE RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" ${ARGN})
-    list(FILTER TEST_SOURCE INCLUDE REGEX ".cpp")
-    set(TEENSY_LIB_CPP_SOURCES ${TEENSY_LIB_CPP_SOURCES} ${TEST_SOURCE}) 
-
-    message( STATUS "---- ${TEST_SOURCE}") 
+    foreach(arg IN LISTS ARGN)
+        file(GLOB TEST_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
+        list(FILTER TEST_SOURCE INCLUDE REGEX ".cpp")
+        set(TEENSY_LIB_CPP_SOURCES ${TEENSY_LIB_CPP_SOURCES} ${TEST_SOURCE}) 
+    endforeach()
 
     foreach(SOURCE_CPP ${TEENSY_LIB_CPP_SOURCES})
-        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS}")
+        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_CPP ${SOURCES_CPP})
 
     foreach(SOURCE_C ${TEENSY_LIB_C_SOURCES})
-        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS}")
+        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_C ${SOURCES_C})
 
     foreach(SOURCE_S ${TEENSY_LIB_S_SOURCES})
         set_property(SOURCE ${SOURCE_S} PROPERTY LANGUAGE C)
-        set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "{S_COMPILE_FLAGS}")
+        set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "${S_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_S ${SOURCES_S})
 
-    #SET(CMAKE_EXE_LINKER_FLAGS "${LINK_FLAGS}")
     add_executable(${ELFTARGET} ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
 
-    set_target_properties(${ELFTARGET} PROPERTIES COMPILE_DEFINITIONS "${INCLUDE_DIRECTORIES}")
     set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES "${COREPATH}")
     set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
     
@@ -167,23 +162,28 @@ endfunction()
 
 function(teensy_add_library TARGET)
     set(ELFTARGET ${TARGET}.o)
+
+    foreach(arg IN LISTS ARGN)
+        file(GLOB TEST_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
+        list(FILTER TEST_SOURCE INCLUDE REGEX ".cpp")
+        set(TEENSY_LIB_CPP_SOURCES ${TEENSY_LIB_CPP_SOURCES} ${TEST_SOURCE}) 
+    endforeach()
     
     foreach(SOURCE_CPP ${TEENSY_LIB_CPP_SOURCES})
-        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS}")
+        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_CPP ${SOURCES_CPP})
 
     foreach(SOURCE_C ${TEENSY_LIB_C_SOURCES})
-        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS}")
+        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_C ${SOURCES_C})
 
     foreach(SOURCE_S ${TEENSY_LIB_S_SOURCES})
         set_property(SOURCE ${SOURCE_S} PROPERTY LANGUAGE C)
-        set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "{S_COMPILE_FLAGS}")
+        set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "${S_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_S ${SOURCES_S})
 
     add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
-    set_target_properties(${ELFTARGET} PROPERTIES COMPILE_DEFINITIONS "${INCLUDE_DIRECTORIES}")
-    set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES "${COREPATH}")
+    set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES ${COREPATH})
     set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
 endfunction()
 
@@ -202,7 +202,7 @@ macro(import_arduino_library_absolute LIB_DIR)
     endif(NOT EXISTS "${LIB_DIR}")
 
     include_directories("${LIB_DIR}")
-    set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES}-I${LIB_DIR} ")
+    set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_DIR} ")
 
     # Mark source files to be built along with the sketch code.
     file(GLOB SOURCES_CPP ABSOLUTE "${LIB_DIR}/*.cpp")
