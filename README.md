@@ -16,7 +16,7 @@ set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 600000000, 24000000, 48000000,
 set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/") 
 set(DEPSPATH "/home/runner/work/midi-smf-reader/midi-smf-reader/deps")
 # COREPATH is optional (ie. only need to change if necessary)
-set(COREPATH "${DEPSPATH}/cores/teensy4/")
+#set(COREPATH "${DEPSPATH}/cores/teensy4/")
 find_package(teensy_cmake_macros)
 ``` 
 
