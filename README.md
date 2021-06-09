@@ -4,7 +4,7 @@ minimal dependency cmake package with macros to compile teensy apps and librarie
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 
 ## TL/DR
-* clone dependencies to ${DEPSPATH}
+* clone dependencies to `${DEPSPATH}`
 ```shell
  > cd /home/runner/work/midi-smf-reader/midi-smf-reader/deps
  > git clone https://github.com/PaulStoffregen/cores
