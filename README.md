@@ -5,6 +5,11 @@ installable cmake package containing macros to cross compile teensy firmware usi
 
 once installed, just add below line to your `CMakeLists.txt`
 ```cmake 
+set(TEENSY_VERSION 40 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
+set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 600000000, 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
+set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
+set(DEPSPATH "/home/runner/work/midi-smf-reader/midi-smf-reader/deps")
+set(COREPATH "${DEPSPATH}/cores/teensy4/")
 find_package(teensy_cmake_macros)
 ``` 
 
