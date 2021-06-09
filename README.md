@@ -9,7 +9,7 @@ set(TEENSY_VERSION 40 CACHE STRING "Set to the Teensy version corresponding to y
 set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 600000000, 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
 set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/") 
 set(DEPSPATH "/home/runner/work/midi-smf-reader/midi-smf-reader/deps")
-# COREPATH is optional (only need to change is necessary)
+# COREPATH is optional (ie. only need to change if necessary)
 set(COREPATH "${DEPSPATH}/cores/teensy4/")
 find_package(teensy_cmake_macros)
 ``` 
