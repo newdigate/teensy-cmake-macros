@@ -4,6 +4,8 @@ cmake package with minimal dependencies to compile teensy apps and libraries usi
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 
 ## TL/DR
+* install arm-none-eabi-gcc 
+  * https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
 * clone dependencies to `${DEPSPATH}`
 ```shell
  > cd /home/runner/work/midi-smf-reader/midi-smf-reader/deps
