@@ -1,5 +1,5 @@
 # teensy cmake macros [![teensy-cmake-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml)
-minimal dependency cmake package with macros to compile teensy apps and libraries using cmake
+cmake package with minimal dependencies to compile teensy apps and libraries using cmake
 
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 
