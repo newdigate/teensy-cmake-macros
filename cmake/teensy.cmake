@@ -4,6 +4,8 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 set(CMAKE_C_COMPILER ${COMPILERPATH}arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER ${COMPILERPATH}arm-none-eabi-g++)
+SET (CMAKE_C_COMPILER_WORKS 1)
+SET (CMAKE_CXX_COMPILER_WORKS 1)
 # * you will need to define the following properies: (frmo https://github.com/newdigate/teensy-cmake-macros)
 #set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
 #set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
