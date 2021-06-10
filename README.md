@@ -1,16 +1,24 @@
 # teensy cmake macros [![teensy-cmake-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml)
-installable cmake package containing macros to cross compile teensy firmware using cmake and gcc-arm-none-eabi
+cmake package with minimal dependencies to compile teensy apps and libraries using cmake
 
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 
-once installed, just add this to your `CMakeLists.txt`
+## TL/DR
+* install arm-none-eabi-gcc 
+  * https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+* clone dependencies to `${DEPSPATH}`
+```shell
+ > cd /home/runner/work/midi-smf-reader/midi-smf-reader/deps
+ > git clone https://github.com/PaulStoffregen/cores
+```
+* add this to beginning of your `CMakeLists.txt`
 ```cmake 
 set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
 set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 600000000, 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
 set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/") 
 set(DEPSPATH "/home/runner/work/midi-smf-reader/midi-smf-reader/deps")
 # COREPATH is optional (ie. only need to change if necessary)
-set(COREPATH "${DEPSPATH}/cores/teensy4/")
+#set(COREPATH "${DEPSPATH}/cores/teensy4/")
 find_package(teensy_cmake_macros)
 ``` 
 
