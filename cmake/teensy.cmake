@@ -174,11 +174,11 @@ function(teensy_add_executable TARGET)
     set(ELFTARGET ${TARGET}.o)
     foreach(arg IN LISTS ARGN)
         file(GLOB TEST_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
-        list(FILTER TEST_SOURCE INCLUDE REGEX ".cpp")
+        list(FILTER TEST_SOURCE INCLUDE REGEX ".cpp$")
         set(TEENSY_EXE_CPP_SOURCES ${TEENSY_EXE_CPP_SOURCES} ${TEST_SOURCE}) 
 
         file(GLOB INO_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
-        list(FILTER INO_SOURCE INCLUDE REGEX ".ino")
+        list(FILTER INO_SOURCE INCLUDE REGEX ".ino$")
         set(TEENSY_EXE_INO_SOURCES ${TEENSY_EXE_INO_SOURCES} ${INO_SOURCE}) 
     endforeach()
 
