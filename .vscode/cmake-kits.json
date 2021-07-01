@@ -1,0 +1,6 @@
+[
+    {
+        "name": "Teensy-4.1",
+        "toolchainFile": "${workspaceFolder}/test/teensy41.toolchain.cmake"
+    }
+]
