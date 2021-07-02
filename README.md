@@ -1,6 +1,11 @@
-# teensy cmake macros [![teensy-cmake-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml)
+# teensy cmake macros 
+
+[![audio-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/audio-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/audio-test.yml)
+[![basic-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/basic-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/basic-test.yml)
+[![vector-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/vector.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/vector.yml)
+
  minimal dependency cmake toolchain to easily compile your teensy sketches and libraries, and optionally link with c++ std libraries. 
-* custom teensy toolchain using cmake and arm-none-eabi-gcc
+* custom teensy toolchain using ```cmake``` and ```arm-none-eabi-gcc```
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 * targetting Teensy 4.x, tested on Teensy 4.1 (should be easy to extend for 3.x)
 * compiles library code to .a archive files to avoid unnecessary recompiling
