@@ -90,7 +90,7 @@
 
 </details>
 
-## teensy_cmake_macros 
+## usage 
 * teensy_add_executable( ```TARGET``` ```files...``` )
   ```cmake 
   teensy_add_executable(myapplication midiread.cpp)
@@ -121,12 +121,6 @@
  ``` 
    teensy_include_directories(../../src)
  ```
-
-## dependencies
-* [CMake](https://cmake.org)
-* [gcc-arm-none-eabi](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-  
-
 
 ## used in
 * [midi-smf-reader](https://github.com/newdigate/midi-smf-reader)
