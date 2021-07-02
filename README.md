@@ -6,29 +6,55 @@
 * compiles library code to .a archive files to avoid unnecessary recompiling
 
 ## TL/DR
-* install arm-none-eabi-gcc 
-  * https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+* install build dependencies
+  <details>
+    <summary>install build dependencies (click to expand) </summary>
+ 
+    * arm-none-eabi-gcc 
+      * https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+
+    * teensy-cmake-macros
+      ```shell
+      > git clone https://github.com/newdigate/teensy-cmake-macros.git
+      > cd teensy-cmake-macros
+      > mkdir cmake-build-debug
+      > cd cmake-build-debug
+      > cmake ..
+      > sudo make install        
+      ``` 
+  </details>
+
 * clone necessary dependencies to a chosen location `${DEPSPATH}`
-```shell
- > cd /home/nic/midi-smf-reader/deps
- > git clone https://github.com/PaulStoffregen/cores.git
- > git clone https://github.com/PaulStoffregen/Audio.git
- > git clone -b Juse_Use_SdFat https://github.com/PaulStoffregen/SD.git 
- > git clone https://github.com/PaulStoffregen/Wire.git
- > git clone https://github.com/PaulStoffregen/SPI.git
- > git clone https://github.com/PaulStoffregen/SerialFlash.git
- > git clone https://github.com/PaulStoffregen/arm_math.git
- > git clone https://github.com/greiman/SdFat.git
-```
-* create a custom cmake toolchain file to your project `cmake/toolchains/teensy41.toolchain.cmake`
-```cmake 
-set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
-set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 600000000, 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
-set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/") 
-set(DEPSPATH "/home/nic/midi-smf-reader/deps")
-set(COREPATH "${DEPSPATH}/cores/teensy4/")
-find_package(teensy_cmake_macros)
-``` 
+  <details>
+    <summary>clone dependencies (click to expand) </summary>
+ 
+    ```shell
+     > cd /home/nic/midi-smf-reader/deps
+     > git clone https://github.com/PaulStoffregen/cores.git
+     > git clone https://github.com/PaulStoffregen/Audio.git
+     > git clone -b Juse_Use_SdFat https://github.com/PaulStoffregen/SD.git 
+     > git clone https://github.com/PaulStoffregen/Wire.git
+     > git clone https://github.com/PaulStoffregen/SPI.git
+     > git clone https://github.com/PaulStoffregen/SerialFlash.git
+     > git clone https://github.com/PaulStoffregen/arm_math.git
+     > git clone https://github.com/greiman/SdFat.git
+    ```
+</details> 
+
+* add a custom cmake toolchain file to your project `cmake/toolchains/teensy41.toolchain.cmake`
+  <details>
+    <summary>cmake/toolchains/teensy41.toolchain.cmake (click to expand) </summary>
+ 
+    ```cmake 
+    set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
+    set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 600000000, 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
+    set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/") 
+    set(DEPSPATH "/home/nic/midi-smf-reader/deps")
+    set(COREPATH "${DEPSPATH}/cores/teensy4/")
+    find_package(teensy_cmake_macros)
+    ``` 
+  </details>
+  
 * update ```DEPSPATH```, ```COMPILERPATH``` and ```COREPATH``` to your dependencies folder, arm-none-eabi-gcc bin folder and path to teensy4 cores
 
 * create a ```CMakeLists.txt``` file in the root directory of your project
@@ -88,15 +114,7 @@ target_link_libraries(my_firmware.o stdc++)
 * [CMake](https://cmake.org)
 * [gcc-arm-none-eabi](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
   
-## download and install
-```shell
-> git clone https://github.com/newdigate/teensy-cmake-macros.git
-> cd teensy-cmake-macros
-> mkdir cmake-build-debug
-> cd cmake-build-debug
-> cmake ..
-> sudo make install        
-```
+
 
 ## example usage
 * set *DEPSPATH*, *COMPILERPATH*, *TEENSY_VERSION*, *CPU_CORE_SPEED*, *CPU*
