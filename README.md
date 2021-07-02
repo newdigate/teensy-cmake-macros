@@ -3,7 +3,7 @@
 * custom teensy toolchain allows you to compile your teensy firmware and libraries easily using cmake and arm-none-eabi-gcc
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 * targetting Teensy 4.x, tested on Teensy 4.1 (should be easy to extend for 3.x)
-* compiles library code to .a archive files to avoid recompiling when not necessary 
+* compiles library code to .a archive files to avoid unnecessary recompiling
 
 ## TL/DR
 * install arm-none-eabi-gcc 
