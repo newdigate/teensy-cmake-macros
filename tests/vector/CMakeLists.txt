@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+project(test_teensy_project_vector)
+set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
+import_arduino_library(cores ${DEPSPATH}/cores/teensy4 avr util)
+teensy_add_executable(vector vector.cpp)
+target_link_libraries(vector.elf stdc++)
+teensy_target_link_libraries(vector cores)
