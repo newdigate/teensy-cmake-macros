@@ -11,7 +11,14 @@
 * clone necessary dependencies to a chosen location `${DEPSPATH}`
 ```shell
  > cd /home/nic/midi-smf-reader/deps
- > git clone https://github.com/PaulStoffregen/cores
+ > git clone https://github.com/PaulStoffregen/cores.git
+ > git clone https://github.com/PaulStoffregen/Audio.git
+ > git clone -b Juse_Use_SdFat https://github.com/PaulStoffregen/SD.git 
+ > git clone https://github.com/PaulStoffregen/Wire.git
+ > git clone https://github.com/PaulStoffregen/SPI.git
+ > git clone https://github.com/PaulStoffregen/SerialFlash.git
+ > git clone https://github.com/PaulStoffregen/arm_math.git
+ > git clone https://github.com/greiman/SdFat.git
 ```
 * create a custom cmake toolchain file to your project `cmake/toolchains/teensy41.toolchain.cmake`
 ```cmake 
