@@ -104,23 +104,23 @@
 </details>
 
 ## usage 
-* teensy_add_executable( ```TARGET``` ```files...``` )
+* ```teensy_add_executable``` ( ```TARGET``` ```files...``` )
   ```cmake 
   teensy_add_executable(myapplication midiread.cpp)
   ``` 
-* teensy_add_library( ```TARGET``` ```files...``` )
+* ```teensy_add_library``` ( ```TARGET``` ```files...``` )
   ```cmake 
   teensy_add_library(mylibrary library1.cpp)
   ``` 
   
-* import_arduino_library (```LibraryName``` ```LibraryPath``` ```additionalRelativeSourceFolders```)
+* ```import_arduino_library``` ( ```LibraryName``` ```LibraryPath``` ```additionalRelativeSourceFolders```)
   ```cmake 
   import_arduino_library(cores ${COREPATH} avr debug util)
   import_arduino_library(SPI ${DEPSPATH}/SPI)        # SPI@Juse_Use_SdFat
   import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
   import_arduino_library(SD ${DEPSPATH}/SD/src)  
   ```
-* teensy_target_link_libraries(```TARGET``` ```libraries...```) 
+* ```teensy_target_link_libraries``` ( ```TARGET``` ```libraries...```) 
 ```
   teensy_target_link_libraries(my_firmware mylibrary SD SdFat SPI cores)
 ```
@@ -130,7 +130,7 @@
    set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
    target_link_libraries(my_firmware.elf stdc++)
 ```
- * teensy_include_directories(```paths...```)
+ * ```teensy_include_directories``` ( ```paths...```)
  ``` 
    teensy_include_directories(../../src)
  ```
