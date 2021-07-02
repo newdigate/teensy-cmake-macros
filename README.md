@@ -1,8 +1,9 @@
 # teensy cmake macros [![teensy-cmake-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/test.yml)
-cmake package with minimal dependency toolchain to compile your teensy sketches and optionally link with c++ std libraries. 
+ minimal dependency cmake toolchain to compile your teensy sketches nd libraries, and optionally link with c++ std libraries. 
 * custom teensy toolchain allows you to compile your teensy firmware and libraries easily using cmake and arm-none-eabi-gcc
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 * targetting Teensy 4.x, tested on Teensy 4.1 (should be easy to extend for 3.x)
+* compiles library code to .a archive files to avoid recompiling when not necessary 
 
 ## TL/DR
 * install arm-none-eabi-gcc 
