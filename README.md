@@ -10,7 +10,7 @@
   <summary>install build dependencies (click to expand) </summary>
 
  * [arm-none-eabi-gcc](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-
+ * [cmake](https://cmake.org/)
  * teensy-cmake-macros
    ```shell
    > git clone https://github.com/newdigate/teensy-cmake-macros.git
@@ -58,32 +58,31 @@
   * update ```DEPSPATH```, ```COMPILERPATH``` and ```COREPATH``` to your dependencies folder, arm-none-eabi-gcc bin folder and path to teensy4 cores
 
 </details>
-  
-* create a ```CMakeLists.txt``` file in the root directory of your project
-```cmake
-cmake_minimum_required(VERSION 3.5)
-project(midi_smf_reader C CXX)
-import_arduino_library(cores ${COREPATH} avr debug util)
-import_arduino_library(SPI ${DEPSPATH}/SPI)
-import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
-import_arduino_library(SD ${DEPSPATH}/SD/src)
 
-# add custom library
-teensy_add_library(my_teensy_library my_teensy_library.cpp)
+<details>
+  <summary>add CMakeLists.txt (click to expand) </summary>
 
-teensy_add_executable(my_firmware sketch.ino)
-teensy_target_link_libraries(my_firmware my_teensy_library SD SdFat SPI cores) # order is IMPORTANT because we are garbage collecting symbols --gc-collect
+  * create a ```CMakeLists.txt``` file in the root directory of your project
+ 
+  ```cmake
+  cmake_minimum_required(VERSION 3.5)
+  project(midi_smf_reader C CXX)
+  import_arduino_library(cores ${COREPATH} avr debug util)
+  import_arduino_library(SPI ${DEPSPATH}/SPI)
+  import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
+  import_arduino_library(SD ${DEPSPATH}/SD/src)
 
-# if you need to link to std library (using <Vector>, etc) 
-target_link_libraries(my_firmware.o stdc++)
+  # add custom library
+  teensy_add_library(my_teensy_library my_teensy_library.cpp)
 
-```
+  teensy_add_executable(my_firmware sketch.ino)
+  teensy_target_link_libraries(my_firmware my_teensy_library SD SdFat SPI cores) # order is IMPORTANT because we are garbage collecting symbols --gc-collect
 
-* [teensy_cmake_macros](#teensy_cmake_macros)
-* [dependencies](#dependencies)
-* [download and install](#download-and-install)
-* [example usage](#example-usage)
-* [used in](#used-in)
+  # if you need to link to std library (using <Vector>, etc) 
+  target_link_libraries(my_firmware.o stdc++)
+  ```
+
+</details>
 
 ## teensy_cmake_macros 
 * teensy_add_executable( TARGET files... )
@@ -111,53 +110,16 @@ target_link_libraries(my_firmware.o stdc++)
 ``` 
    target_link_libraries(my_firmware.o stdc++)
 ```
+ * teensy_include_directories(paths...)
+ ``` 
+   teensy_include_directories(../../src)
+ ```
 
 ## dependencies
 * [CMake](https://cmake.org)
 * [gcc-arm-none-eabi](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
   
 
-
-## example usage
-* set *DEPSPATH*, *COMPILERPATH*, *TEENSY_VERSION*, *CPU_CORE_SPEED*, *CPU*
-``` cmake
-cmake_minimum_required(VERSION 3.10)
-project(basic C CXX)
-set(CMAKE_CXX_STANDARD 14)
-set(TEENSY_VERSION 40 CACHE STRING "Set to the Teensy version corresponding to your board (30 or 31 allowed)" FORCE)
-set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
-set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
-set(DEPSPATH "/home/runner/work/midi-smf-reader/midi-smf-reader/deps")
-set(COREPATH "${DEPSPATH}/cores/teensy4/")
-
-# teensy_cmake_macros: https://github.com/newdigate/teensy-cmake-macros
-find_package(teensy_cmake_macros)
-
-# include header files and source files (non-recursive)
-import_arduino_library(${DEPSPATH} SPI)
-import_arduino_library(${DEPSPATH} SdFat/src)
-import_arduino_library(${DEPSPATH} SdFat/src/common)
-import_arduino_library(${DEPSPATH} SdFat/src/DigitalIO)
-import_arduino_library(${DEPSPATH} SdFat/src/ExFatLib)
-import_arduino_library(${DEPSPATH} SdFat/src/FatLib)
-import_arduino_library(${DEPSPATH} SdFat/src/FsLib)
-import_arduino_library(${DEPSPATH} SdFat/src/iostream)
-import_arduino_library(${DEPSPATH} SdFat/src/SdCard)
-import_arduino_library(${DEPSPATH} SdFat/src/SpiDriver)
-import_arduino_library(${DEPSPATH} SD/src)
-
-# add targets to create teensy firmware .o, .hex file
-teensy_add_executable(basic midiread.cpp)
-
-# add targets to compile library 
-teensy_add_library(libbasic midiread.cpp)
-
-# link libraries 
-teensy_target_link_libraries(my_firmware my_teensy_library SD SdFat SPI cores) # order is IMPORTANT because we are garbage collecting symbols --gc-collect
-
-# if you need to link to std library (using <Vector>, etc) 
-target_link_libraries(my_firmware.o stdc++)
-```
 
 ## used in
 * [midi-smf-reader](https://github.com/newdigate/midi-smf-reader)
