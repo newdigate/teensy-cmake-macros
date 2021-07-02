@@ -79,7 +79,7 @@
   teensy_target_link_libraries(my_firmware my_teensy_library SD SdFat SPI cores) # order is IMPORTANT because we are garbage collecting symbols --gc-collect
 
   # if you need to link to std library (using <Vector>, etc) 
-  target_link_libraries(my_firmware.o stdc++)
+  target_link_libraries(my_firmware.elf stdc++)
   ```
 
 </details>
@@ -108,7 +108,7 @@
 
 * link to std library
 ``` 
-   target_link_libraries(my_firmware.o stdc++)
+   target_link_libraries(my_firmware.elf stdc++)
 ```
  * teensy_include_directories(```paths...```)
  ``` 
