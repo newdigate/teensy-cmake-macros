@@ -87,7 +87,20 @@
   set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
   target_link_libraries(my_firmware.elf stdc++)
   ```
-
+ 
+</details>
+ 
+<details>
+  <summary>build (click to expand) </summary>
+ 
+  * run from a terminal in your repository root directory 
+ 
+  ```shell
+  > mkdir cmake-build-debug
+  > cd cmake-build-debug
+  > cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE:FILEPATH="../cmake/toolchains/teensy41.toolchain.cmake" 
+  > make       
+  ```
 </details>
 
 ## usage 
