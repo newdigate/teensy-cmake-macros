@@ -79,6 +79,7 @@
   teensy_target_link_libraries(my_firmware my_teensy_library SD SdFat SPI cores) # order is IMPORTANT because we are garbage collecting symbols --gc-collect
 
   # if you need to link to std library (using <Vector>, etc) 
+  set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
   target_link_libraries(my_firmware.elf stdc++)
   ```
 
@@ -108,6 +109,7 @@
 
 * link to std library
 ``` 
+   set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
    target_link_libraries(my_firmware.elf stdc++)
 ```
  * teensy_include_directories(```paths...```)
