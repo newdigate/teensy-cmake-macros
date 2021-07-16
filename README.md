@@ -87,27 +87,40 @@
   set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
   target_link_libraries(my_firmware.elf stdc++)
   ```
-
+ 
+</details>
+ 
+<details>
+  <summary>build (click to expand) </summary>
+ 
+  * run from a terminal in your repository root directory 
+ 
+  ```shell
+  > mkdir cmake-build-debug
+  > cd cmake-build-debug
+  > cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE:FILEPATH="../cmake/toolchains/teensy41.toolchain.cmake" 
+  > make       
+  ```
 </details>
 
-## teensy_cmake_macros 
-* teensy_add_executable( ```TARGET``` ```files...``` )
+## usage 
+* ```teensy_add_executable``` ( ```TARGET``` ```files...``` )
   ```cmake 
   teensy_add_executable(myapplication midiread.cpp)
   ``` 
-* teensy_add_library( ```TARGET``` ```files...``` )
+* ```teensy_add_library``` ( ```TARGET``` ```files...``` )
   ```cmake 
   teensy_add_library(mylibrary library1.cpp)
   ``` 
   
-* import_arduino_library (```LibraryName``` ```LibraryPath``` ```additionalRelativeSourceFolders```)
+* ```import_arduino_library``` ( ```LibraryName``` ```LibraryPath``` ```additionalRelativeSourceFolders```)
   ```cmake 
   import_arduino_library(cores ${COREPATH} avr debug util)
   import_arduino_library(SPI ${DEPSPATH}/SPI)        # SPI@Juse_Use_SdFat
   import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
   import_arduino_library(SD ${DEPSPATH}/SD/src)  
   ```
-* teensy_target_link_libraries(```TARGET``` ```libraries...```) 
+* ```teensy_target_link_libraries``` ( ```TARGET``` ```libraries...```) 
 ```
   teensy_target_link_libraries(my_firmware mylibrary SD SdFat SPI cores)
 ```
@@ -117,16 +130,10 @@
    set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
    target_link_libraries(my_firmware.elf stdc++)
 ```
- * teensy_include_directories(```paths...```)
+ * ```teensy_include_directories``` ( ```paths...```)
  ``` 
    teensy_include_directories(../../src)
  ```
-
-## dependencies
-* [CMake](https://cmake.org)
-* [gcc-arm-none-eabi](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
-  
-
 
 ## used in
 * [midi-smf-reader](https://github.com/newdigate/midi-smf-reader)
