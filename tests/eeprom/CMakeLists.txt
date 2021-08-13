@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+project(test_teensy_eeprom)
+import_arduino_library(cores ${DEPSPATH}/cores/teensy4 avr util)
+import_arduino_library(EEPROM ${DEPSPATH}/EEPROM)
+teensy_add_executable(eepromapp eepromapp.cpp)
+teensy_target_link_libraries(eepromapp EEPROM cores)
+set(CMAKE_VERBOSE_MAKEFILE 1)
