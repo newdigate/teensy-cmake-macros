@@ -3,6 +3,7 @@
 [![audio-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/audio-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/audio-test.yml)
 [![basic-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/basic-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/basic-test.yml)
 [![vector-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/vector.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/vector.yml)
+[![eeprom-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/eeprom-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/eeprom-test.yml)
 
  minimal dependency cmake toolchain to easily compile your teensy sketches and libraries, and optionally link with c++ std libraries. 
 * custom teensy toolchain using ```cmake``` and ```arm-none-eabi-gcc```
