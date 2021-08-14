@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+project(test_teensy_spi)
+import_arduino_library(cores ${DEPSPATH}/cores/teensy4 util)
+import_arduino_library(SPI ${DEPSPATH}/SPI)
+teensy_add_executable(spiapp spiapp.cpp)
+teensy_target_link_libraries(spiapp SPI cores)
