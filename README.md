@@ -116,7 +116,7 @@
   
 * ```import_arduino_library``` ( ```LibraryName``` ```LibraryPath``` ```additionalRelativeSourceFolders```)
   ```cmake 
-  import_arduino_library(cores ${COREPATH} avr debug util)
+  import_arduino_library(cores ${COREPATH})
   import_arduino_library(SPI ${DEPSPATH}/SPI)        # SPI@Juse_Use_SdFat
   import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
   import_arduino_library(SD ${DEPSPATH}/SD/src)  
