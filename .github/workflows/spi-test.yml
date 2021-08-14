@@ -22,8 +22,8 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
-          repository: PaulStoffregen/EEPROM.git
-          path: deps/EEPROM
+          repository: PaulStoffregen/SPI.git
+          path: deps/SPI
           fetch-depth: 1
           ref: master
 
