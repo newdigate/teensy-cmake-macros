@@ -4,6 +4,7 @@
 [![basic-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/basic-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/basic-test.yml)
 [![vector-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/vector.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/vector.yml)
 [![eeprom-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/eeprom-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/eeprom-test.yml)
+[![spi-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/spi-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/spi-test.yml)
 
  minimal dependency cmake toolchain to easily compile your teensy sketches and libraries, and optionally link with c++ std libraries. 
 * custom teensy toolchain using ```cmake``` and ```arm-none-eabi-gcc```
@@ -116,7 +117,7 @@
   
 * ```import_arduino_library``` ( ```LibraryName``` ```LibraryPath``` ```additionalRelativeSourceFolders```)
   ```cmake 
-  import_arduino_library(cores ${COREPATH} avr debug util)
+  import_arduino_library(cores ${COREPATH})
   import_arduino_library(SPI ${DEPSPATH}/SPI)        # SPI@Juse_Use_SdFat
   import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
   import_arduino_library(SD ${DEPSPATH}/SD/src)  
