@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(teensy_cmake_macros)
-set(teensy_cmake_macros_VERSION 1.0.2)
+set(teensy_cmake_macros_VERSION 1.0.3)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/teensy_cmake_macros )
 
