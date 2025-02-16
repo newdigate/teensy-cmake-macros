@@ -348,3 +348,22 @@ macro(teensy_target_link_libraries TARGET)
         target_link_libraries(${TARGET}.elf ${loop_var}.o)
     endforeach()
 endmacro(teensy_target_link_libraries)
+
+macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH)
+    include(FetchContent)
+    FetchContent_Declare(${LIB_NAME}
+            GIT_REPOSITORY ${LIB_URL}
+            GIT_TAG        ${LIB_BRANCH}
+    )
+    FetchContent_MakeAvailable(${LIB_NAME})
+    set(LIB_ROOT ${${LIB_NAME}_SOURCE_DIR})
+
+    message(STATUS "import_arduino_library_git(${LIB_NAME} ${LIB_URL} ${LIB_BRANCH} ${LIB_ROOT} ${ARGN})")
+    # Check if we can find the library.
+    if(NOT EXISTS "${LIB_ROOT}")
+        message(STATUS "Could not find the directory for library '${LIB_ROOT}' -- ignoring (its possible that the library is not used for the target you are calling) !!!!!")
+    else()
+        import_arduino_library(${LIB_NAME} ${LIB_ROOT} ${ARGN})
+    endif(NOT EXISTS "${LIB_ROOT}")
+
+endmacro(import_arduino_library)
