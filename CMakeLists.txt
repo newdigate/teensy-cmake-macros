@@ -349,14 +349,14 @@ macro(teensy_target_link_libraries TARGET)
     endforeach()
 endmacro(teensy_target_link_libraries)
 
-macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH)
+macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
     include(FetchContent)
     FetchContent_Declare(${LIB_NAME}
             GIT_REPOSITORY ${LIB_URL}
             GIT_TAG        ${LIB_BRANCH}
     )
     FetchContent_MakeAvailable(${LIB_NAME})
-    set(LIB_ROOT ${${LIB_NAME}_SOURCE_DIR})
+    set(LIB_ROOT "${${LIB_NAME}_SOURCE_DIR}/${LIB_PATH}")
 
     message(STATUS "import_arduino_library_git(${LIB_NAME} ${LIB_URL} ${LIB_BRANCH} ${LIB_ROOT} ${ARGN})")
     # Check if we can find the library.
