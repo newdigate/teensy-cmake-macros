@@ -366,4 +366,4 @@ macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH)
         import_arduino_library(${LIB_NAME} ${LIB_ROOT} ${ARGN})
     endif(NOT EXISTS "${LIB_ROOT}")
 
-endmacro(import_arduino_library)
+endmacro(import_arduino_library_git)
