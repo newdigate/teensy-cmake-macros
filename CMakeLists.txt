@@ -356,9 +356,9 @@ macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
             GIT_TAG        ${LIB_BRANCH}
     )
     FetchContent_MakeAvailable(${LIB_NAME})
-    set(LIB_ROOT "${${LIB_NAME}_SOURCE_DIR}/${LIB_PATH}")
+    string(TOLOWER ${LIB_NAME} LIB_NAME_LOWER)
+    set(LIB_ROOT "${${LIB_NAME_LOWER}_SOURCE_DIR}/${LIB_PATH}")
 
-    message(STATUS "import_arduino_library_git(${LIB_NAME} ${LIB_URL} ${LIB_BRANCH} ${LIB_ROOT} ${ARGN})")
     # Check if we can find the library.
     if(NOT EXISTS "${LIB_ROOT}")
         message(STATUS "Could not find the directory for library '${LIB_ROOT}' -- ignoring (its possible that the library is not used for the target you are calling) !!!!!")
