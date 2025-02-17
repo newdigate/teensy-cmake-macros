@@ -1,5 +1,0 @@
-set(teensy_cmake_macros_VERSION "@teensy_cmake_macros_VERSION@")
-
-@PACKAGE_INIT@
-
-check_required_components(teensy_cmake_macros)
