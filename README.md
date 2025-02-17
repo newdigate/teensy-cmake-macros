@@ -24,19 +24,24 @@
    #teensy compiler options
    set(COMPILERPATH "/Applications/ARM/bin/")
    
-   include(FetchContent)
-   FetchContent_Declare(teensy_cmake_macros
-           GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
-           GIT_TAG        main
-   )
-   FetchContent_MakeAvailable(teensy_cmake_macros)
-   message(INFO ${teensy_cmake_macros_SOURCE_DIR})
-   include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.arm.include.txt)
+   set(BUILD_FOR_TEENSY ON)
+   set(CMAKE_SYSTEM_NAME Generic)
+   set(CMAKE_SYSTEM_PROCESSOR arm)
+   set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+   set(CMAKE_C_COMPILER ${COMPILERPATH}arm-none-eabi-gcc)
+   set(CMAKE_CXX_COMPILER ${COMPILERPATH}arm-none-eabi-g++)
+   set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
    ``` 
-* add include in your CMakeLists.txt file
-  ```cmake
-  include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
-  ```
+  * add include in your CMakeLists.txt file
+    ```cmake
+    include(FetchContent)
+    FetchContent_Declare(teensy_cmake_macros
+        GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
+        GIT_TAG        main
+    )
+    FetchContent_MakeAvailable(teensy_cmake_macros)
+    include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
+    ```
 * specify toolchain file in cmake configuration stage
     ```shell
     > cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE:FILEPATH="../cmake/toolchains/teensy41.cmake`
@@ -52,6 +57,13 @@
   ```cmake
     cmake_minimum_required(VERSION 3.5)
     project(midi_smf_reader C CXX)
+
+    include(FetchContent)
+    FetchContent_Declare(teensy_cmake_macros
+            GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
+            GIT_TAG        main
+    )
+    FetchContent_MakeAvailable(teensy_cmake_macros)
     include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
 
     import_arduino_library(cores ${teensy_cores_SOURCE_DIR}/teensy4 avr util)
