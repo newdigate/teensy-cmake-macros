@@ -109,7 +109,6 @@
   teensy_target_link_libraries(my_firmware mylibrary SD SdFat SPI cores)
 ```
 
-import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH
 * ```import_arduino_library_git``` ( ```LibraryName``` ```LibraryUrl``` ```Branch``` ```SourcePath``` ```additionalRelativeSourceFolders```)
   ```cmake 
     import_arduino_library_git(SPI https://github.com/PaulStoffregen/SPI.git master "")
