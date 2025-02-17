@@ -256,7 +256,7 @@ endfunction()
 
 macro(import_arduino_library LIB_NAME LIB_ROOT)
     if ("**${LIB_NAME}**" IN_LIST Arduino_libraries_List)
-        message(INFO "-- import_arduino_library -- ${name} is already imported...")
+        message(INFO "-- import_arduino_library -- ${LIB_NAME} is already imported...")
     else ()
         list(APPEND Arduino_libraries_List "**${LIB_NAME}**")
         set(Arduino_libraries_List ${Arduino_libraries_List} CACHE INTERNAL "")
