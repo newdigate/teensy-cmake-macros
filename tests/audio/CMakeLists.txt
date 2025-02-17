@@ -1,12 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
 project(test_teensy_project_audio)
-import_arduino_library(cores ${DEPSPATH}/cores/teensy4 avr util)
-import_arduino_library(SPI ${DEPSPATH}/SPI)
-import_arduino_library(SdFat ${DEPSPATH}/SdFat/src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
-import_arduino_library(SD ${DEPSPATH}/SD/src)
-import_arduino_library(SerialFlash ${DEPSPATH}/SerialFlash util)
-import_arduino_library(Wire ${DEPSPATH}/Wire utility)
-import_arduino_library(arm_math ${DEPSPATH}/arm_math/src)
-import_arduino_library(Audio ${DEPSPATH}/Audio utility)
+
+# in this case we already have a local copy of teensy-cmake-macros (usually we wouldn't, we would use FetchContent below
+# include(../../CMakeLists.include.txt)
+
+include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
+
+import_arduino_library(cores ${teensy_cores_SOURCE_DIR}/teensy4 avr util)
+import_arduino_library_git(SPI https://github.com/PaulStoffregen/SPI master "")
+import_arduino_library_git(SdFat https://github.com/PaulStoffregen/SdFat master src common DigitalIO ExFatLib FatLib FsLib iostream SdCard SpiDriver)
+import_arduino_library_git(SD https://github.com/PaulStoffregen/SD Juse_Use_SdFat src)
+import_arduino_library_git(SerialFlash https://github.com/PaulStoffregen/SerialFlash master "" util)
+import_arduino_library_git(Wire https://github.com/PaulStoffregen/Wire master "" utility)
+import_arduino_library_git(arm_math https://github.com/PaulStoffregen/arm_math master src)
+import_arduino_library_git(Audio https://github.com/PaulStoffregen/Audio master "" utility)
+
 teensy_add_executable(audio_app audio.cpp)
 teensy_target_link_libraries(audio_app Audio cores Wire SPI SdFat SD SerialFlash  arm_math )

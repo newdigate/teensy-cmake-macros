@@ -1,20 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
-set(BUILD_FOR_TEENSY ON)
-
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR arm)
-set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
-set(CMAKE_C_COMPILER ${COMPILERPATH}arm-none-eabi-gcc)
-set(CMAKE_CXX_COMPILER ${COMPILERPATH}arm-none-eabi-g++)
-#set(CMAKE_LINKER ${COMPILERPATH}arm-none-eabi-gcc)
-set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-#SET (CMAKE_C_COMPILER_WORKS 1)
-#SET (CMAKE_CXX_COMPILER_WORKS 1)
 # * you will need to define the following properies: (frmo https://github.com/newdigate/teensy-cmake-macros)
 #set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
 #set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
 #set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
-# * core path will be set as below by default. you can change if necessary
 
 include(FetchContent)
 FetchContent_Declare(teensy_cores
@@ -22,6 +10,7 @@ FetchContent_Declare(teensy_cores
         GIT_TAG        master
 )
 FetchContent_MakeAvailable(teensy_cores)
+# * core path will be set as below by default. you can change if necessary
 set(COREPATH "${teensy_cores_SOURCE_DIR}/teensy4/")
 
 if (APPLE)
@@ -99,7 +88,7 @@ function(teensy_set_dynamic_properties)
         elseif(TEENSY_VERSION EQUAL 41)
             message(STATUS "building for teensy 4.1")
             set(CPU_DEFINE __IMXRT1062__)
-            set(LINKER_FILE ${COREPATH} imxrt1062_t41.ld)
+            set(LINKER_FILE ${COREPATH}imxrt1062_t41.ld)
             set(build_board TEENSY41)
             set(build_flags_ld " -Wl,--gc-sections,--relax ")
             set(build_core teensy4)
@@ -266,12 +255,12 @@ function(teensy_add_library TARGET)
 endfunction()
 
 macro(import_arduino_library LIB_NAME LIB_ROOT)
-    if ("${LIB_NAME}" IN_LIST Arduino_libraries_List)
+    if ("**${LIB_NAME}**" IN_LIST Arduino_libraries_List)
         message(INFO "-- import_arduino_library -- ${name} is already imported...")
     else ()
-        list(APPEND Arduino_libraries_List "${LIB_NAME}")
+        list(APPEND Arduino_libraries_List "**${LIB_NAME}**")
         set(Arduino_libraries_List ${Arduino_libraries_List} CACHE INTERNAL "")
-
+        message(INFO ${Arduino_libraries_List})
         message(STATUS "import_arduino_library(${LIB_NAME} ${LIB_ROOT} ${ARGN})")
         # Check if we can find the library.
         if(NOT EXISTS "${LIB_ROOT}")
