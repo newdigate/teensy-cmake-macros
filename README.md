@@ -14,23 +14,28 @@
 
 # Usage
 * add a toolchain cmake file `cmake\toolchains\teensy41.cmake`
+  * update ```COMPILERPATH``` to [arm-none-eabi-gcc](https://developer.arm.com/downloads/-/gnu-rm/10-3-2021-10) bin folder
    ```cmake
    set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (30 or 31 allowed)" FORCE)
    set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
-   set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "")
-   # teensy compiler options
-   set(COMPILERPATH "/Applications/ARM/bin/") 
-   add_definitions(-DTEENSY_VERSION=${TEENSY_VERSION})
-
-   include(FetchContent) 
+   set(CMAKE_EXE_LINKER_FLAGS "--specs=nosys.specs" CACHE INTERNAL "")
+   
+   #teensy compiler options
+   set(COMPILERPATH "/Applications/ARM/bin/")
+   
+   include(FetchContent)
    FetchContent_Declare(teensy_cmake_macros
            GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
            GIT_TAG        noinstall
    )
    FetchContent_MakeAvailable(teensy_cmake_macros)
-   include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt) 
+   message(INFO ${teensy_cmake_macros_SOURCE_DIR})
+   include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.arm.include.txt)
    ``` 
-
+* add include in your CMakeLists.txt file
+  ```cmake
+  include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
+  ```
 * specify toolchain file in cmake configuration stage
     ```shell
     > cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE:FILEPATH="../cmake/toolchains/teensy41.cmake`
@@ -41,16 +46,13 @@
  * [arm-none-eabi-gcc](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
  * [cmake](https://cmake.org/)
 
-# custom cmake toolchain
-
-  * add a custom cmake toolchain file to your project `cmake/toolchains/teensy41.cmake` (as above)
-  * update ```COMPILERPATH``` to your dependencies folder, [arm-none-eabi-gcc](https://developer.arm.com/downloads/-/gnu-rm/10-3-2021-10) bin folder
-
 # add CMakeLists.txt to your project root
   * create a ```CMakeLists.txt``` file in the root directory of your project
   ```cmake
     cmake_minimum_required(VERSION 3.5)
     project(midi_smf_reader C CXX)
+    include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
+
     import_arduino_library(cores ${teensy_cores_SOURCE_DIR}/teensy4 avr util)
     
     import_arduino_library_git(SPI https://github.com/PaulStoffregen/SPI.git master "")
@@ -75,7 +77,6 @@
     target_link_libraries(my_firmware.elf stdc++)
   ```
 
- 
 # build
   * run from a terminal in your repository root directory 
  
