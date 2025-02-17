@@ -3,8 +3,8 @@ set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 o
 set(CMAKE_EXE_LINKER_FLAGS "--specs=nosys.specs" CACHE INTERNAL "")
 
 #teensy compiler options
-#set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
-set(COMPILERPATH "/Applications/ARM/bin/")
+set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
+#set(COMPILERPATH "/Applications/ARM/bin/")
 
 set(BUILD_FOR_TEENSY ON)
 set(CMAKE_SYSTEM_NAME Generic)
