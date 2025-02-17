@@ -19,6 +19,10 @@ if (APPLE)
     set(CMAKE_OSX_SYSROOT "")
 endif()
 
+if (PROJECT_IS_TOP_LEVEL)
+    set(Arduino_libraries_List "" CACHE INTERNAL "")
+endif ()
+
 # static configuration
 set(runtime_ide_version 159)
 set(arduino_ide_version 10607)
@@ -269,62 +273,68 @@ function(teensy_add_library TARGET)
 endfunction()
 
 macro(import_arduino_library LIB_NAME LIB_ROOT)
-    message(STATUS "import_arduino_library(${LIB_NAME} ${LIB_ROOT} ${ARGN})")
-    # Check if we can find the library.
-    if(NOT EXISTS "${LIB_ROOT}")
-        message(STATUS "Could not find the directory for library '${LIB_ROOT}' -- ignoring (its possible that the library is not used for the target you are calling) !!!!!")
-    else()
-        set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_ROOT} ")
+    if ("${LIB_NAME}" IN_LIST Arduino_libraries_List)
+        message(INFO "-- import_arduino_library -- ${name} is already imported...")
+    else ()
+        list(APPEND Arduino_libraries_List "${LIB_NAME}")
+        set(Arduino_libraries_List ${Arduino_libraries_List} CACHE INTERNAL "")
 
-        set(IMPORT_LIB_CPP_SOURCES "")
-        set(IMPORT_LIB_C_SOURCES "")
-        set(IMPORT_LIB_S_SOURCES "")
+        message(STATUS "import_arduino_library(${LIB_NAME} ${LIB_ROOT} ${ARGN})")
+        # Check if we can find the library.
+        if(NOT EXISTS "${LIB_ROOT}")
+            message(STATUS "Could not find the directory for library '${LIB_ROOT}' -- ignoring (its possible that the library is not used for the target you are calling) !!!!!")
+        else()
+            set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_ROOT} ")
 
-        # Mark source files to be built along with the sketch code.
-        file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/*.cpp")
-        foreach(SOURCE_CPP ${SOURCES_CPP})
-            set(IMPORT_LIB_CPP_SOURCES ${IMPORT_LIB_CPP_SOURCES} ${SOURCE_CPP})
-        endforeach(SOURCE_CPP ${SOURCES_CPP})
-
-        file(GLOB SOURCES_C ABSOLUTE "${LIB_ROOT}/*.c")
-        foreach(SOURCE_C ${SOURCES_C})
-            set(IMPORT_LIB_C_SOURCES ${IMPORT_LIB_C_SOURCES} ${SOURCE_C})
-        endforeach(SOURCE_C ${SOURCES_C})
-
-        file(GLOB SOURCES_S ABSOLUTE "${LIB_ROOT}/*.S")
-        foreach(SOURCE_S ${SOURCES_S})
-            set(IMPORT_LIB_S_SOURCES ${IMPORT_LIB_S_SOURCES} ${SOURCE_S})
-        endforeach(SOURCE_S ${SOURCES_S})
-
-        foreach(arg ${ARGN})
-            message(status " checking for ${LIB_ROOT}/${arg}")
-            if(NOT EXISTS ${LIB_ROOT}/${arg})
-                message(FATAL_ERROR "Could not find the Arduino library directory ${LIB_ROOT}/${arg}")
-            endif(NOT EXISTS ${LIB_ROOT}/${arg})
-            include_directories("${LIB_ROOT}/${arg}")
-            set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_ROOT}/${arg} ")
+            set(IMPORT_LIB_CPP_SOURCES "")
+            set(IMPORT_LIB_C_SOURCES "")
+            set(IMPORT_LIB_S_SOURCES "")
 
             # Mark source files to be built along with the sketch code.
-            file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/${arg}/*.cpp")
+            file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/*.cpp")
             foreach(SOURCE_CPP ${SOURCES_CPP})
                 set(IMPORT_LIB_CPP_SOURCES ${IMPORT_LIB_CPP_SOURCES} ${SOURCE_CPP})
             endforeach(SOURCE_CPP ${SOURCES_CPP})
 
-            file(GLOB SOURCES_C ABSOLUTE "${LIB_ROOT}/${arg}/*.c")
+            file(GLOB SOURCES_C ABSOLUTE "${LIB_ROOT}/*.c")
             foreach(SOURCE_C ${SOURCES_C})
                 set(IMPORT_LIB_C_SOURCES ${IMPORT_LIB_C_SOURCES} ${SOURCE_C})
             endforeach(SOURCE_C ${SOURCES_C})
 
-            file(GLOB SOURCES_S ABSOLUTE "${LIB_ROOT}/${arg}/*.S")
+            file(GLOB SOURCES_S ABSOLUTE "${LIB_ROOT}/*.S")
             foreach(SOURCE_S ${SOURCES_S})
                 set(IMPORT_LIB_S_SOURCES ${IMPORT_LIB_S_SOURCES} ${SOURCE_S})
             endforeach(SOURCE_S ${SOURCES_S})
-        endforeach()
-        
-        teensy_add_library(${LIB_NAME} ${IMPORT_LIB_CPP_SOURCES} ${IMPORT_LIB_C_SOURCES} ${IMPORT_LIB_S_SOURCES})
 
-    endif(NOT EXISTS "${LIB_ROOT}")
+            foreach(arg ${ARGN})
+                message(status " checking for ${LIB_ROOT}/${arg}")
+                if(NOT EXISTS ${LIB_ROOT}/${arg})
+                    message(FATAL_ERROR "Could not find the Arduino library directory ${LIB_ROOT}/${arg}")
+                endif(NOT EXISTS ${LIB_ROOT}/${arg})
+                include_directories("${LIB_ROOT}/${arg}")
+                set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_ROOT}/${arg} ")
 
+                # Mark source files to be built along with the sketch code.
+                file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/${arg}/*.cpp")
+                foreach(SOURCE_CPP ${SOURCES_CPP})
+                    set(IMPORT_LIB_CPP_SOURCES ${IMPORT_LIB_CPP_SOURCES} ${SOURCE_CPP})
+                endforeach(SOURCE_CPP ${SOURCES_CPP})
+
+                file(GLOB SOURCES_C ABSOLUTE "${LIB_ROOT}/${arg}/*.c")
+                foreach(SOURCE_C ${SOURCES_C})
+                    set(IMPORT_LIB_C_SOURCES ${IMPORT_LIB_C_SOURCES} ${SOURCE_C})
+                endforeach(SOURCE_C ${SOURCES_C})
+
+                file(GLOB SOURCES_S ABSOLUTE "${LIB_ROOT}/${arg}/*.S")
+                foreach(SOURCE_S ${SOURCES_S})
+                    set(IMPORT_LIB_S_SOURCES ${IMPORT_LIB_S_SOURCES} ${SOURCE_S})
+                endforeach(SOURCE_S ${SOURCES_S})
+            endforeach()
+
+            teensy_add_library(${LIB_NAME} ${IMPORT_LIB_CPP_SOURCES} ${IMPORT_LIB_C_SOURCES} ${IMPORT_LIB_S_SOURCES})
+
+        endif(NOT EXISTS "${LIB_ROOT}")
+    endif ()
 endmacro(import_arduino_library)
 
 macro(teensy_remove_sources LIB_DIR)
