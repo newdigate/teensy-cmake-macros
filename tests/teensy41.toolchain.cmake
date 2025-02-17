@@ -9,7 +9,7 @@ set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
 include(FetchContent)
 FetchContent_Declare(teensy_cmake_macros
         GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
-        GIT_TAG        noinstall
+        GIT_TAG        main
 )
 FetchContent_MakeAvailable(teensy_cmake_macros)
 message(INFO ${teensy_cmake_macros_SOURCE_DIR})
