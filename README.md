@@ -26,7 +26,7 @@
    include(FetchContent)
    FetchContent_Declare(teensy_cmake_macros
            GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
-           GIT_TAG        noinstall
+           GIT_TAG        main
    )
    FetchContent_MakeAvailable(teensy_cmake_macros)
    message(INFO ${teensy_cmake_macros_SOURCE_DIR})
