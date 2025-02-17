@@ -41,24 +41,6 @@ function(teensy_set_dynamic_properties)
     if (NOT DEFINED teensy_set_dynamic_properties_has_executed)
         set(teensy_set_dynamic_properties_has_executed 1 CACHE INTERNAL "teensy_set_dynamic_properties_has_executed")
         message(STATUS "teensy_set_dynamic_properties()")
-        
-        message(CHECK_START "identify root dependency path")
-        if (NOT DEFINED DEPSPATH)
-            message(FATAL_ERROR "DEPSPATH is UNDEFINED")
-        else()
-            message(STATUS "DEPSPATH: ${DEPSPATH}")    
-        endif()
-        message(CHECK_PASS "identified")
-
-
-
-        if (NOT DEFINED COREPATH)
-            set(COREPATH "${DEPSPATH}/cores/teensy4/")
-            set(COREPATH ${COREPATH} CACHE INTERNAL "COREPATH")
-            message(STATUS "COREPATH: ${COREPATH}")
-        else()
-            message(STATUS "COREPATH: ${COREPATH}")    
-        endif()
 
         if (NOT DEFINED CPU_CORE_SPEED)
             message(FATAL_ERROR "CPU_CORE_SPEED is UNDEFINED")
@@ -108,7 +90,7 @@ function(teensy_set_dynamic_properties)
         elseif(TEENSY_VERSION EQUAL 41)
             message(STATUS "building for teensy 4.1")
             set(CPU_DEFINE __IMXRT1062__)
-            set(LINKER_FILE ${COREPATH}imxrt1062_t41.ld)
+            set(LINKER_FILE ${teensy_cores_SOURCE_DIR}/teensy4/imxrt1062_t41.ld)
             set(build_board TEENSY41)
             set(build_flags_ld " -Wl,--gc-sections,--relax ")
             set(build_core teensy4)
@@ -262,7 +244,9 @@ function(teensy_add_library TARGET)
     endforeach(SOURCE_S ${SOURCES_S})
 
     add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
-    set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES ${COREPATH})
+    if (COREPATH)
+        set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES ${COREPATH})
+    endif ()
     set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
 
     add_custom_command(OUTPUT ${TARGET}.hex 
@@ -366,9 +350,9 @@ macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
             GIT_TAG        ${LIB_BRANCH}
     )
     FetchContent_MakeAvailable(${LIB_NAME})
-    set(LIB_ROOT "${${LIB_NAME}_SOURCE_DIR}/${LIB_PATH}")
+    string(TOLOWER ${LIB_NAME} LIB_NAME_LOWER)
+    set(LIB_ROOT "${${LIB_NAME_LOWER}_SOURCE_DIR}/${LIB_PATH}")
 
-    message(STATUS "import_arduino_library_git(${LIB_NAME} ${LIB_URL} ${LIB_BRANCH} ${LIB_ROOT} ${ARGN})")
     # Check if we can find the library.
     if(NOT EXISTS "${LIB_ROOT}")
         message(STATUS "Could not find the directory for library '${LIB_ROOT}' -- ignoring (its possible that the library is not used for the target you are calling) !!!!!")
