@@ -17,6 +17,11 @@ if (APPLE)
     set(CMAKE_OSX_SYSROOT "")
 endif()
 
+# ignore cmake macro idf_component_register
+macro(idf_component_register)
+    return()
+endmacro()
+
 if (PROJECT_IS_TOP_LEVEL)
     set(Arduino_libraries_List "" CACHE INTERNAL "")
 endif ()
