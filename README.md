@@ -76,7 +76,7 @@
     import_arduino_library_git(SerialFlash https://github.com/PaulStoffregen/SerialFlash.git master "" util)
     import_arduino_library_git(Wire https://github.com/PaulStoffregen/Wire.git master "" utility)
     import_arduino_library_git(arm_math https://github.com/PaulStoffregen/arm_math.git master src)
-    import_arduino_library_git(TeensyGFX https://github.com/newdigate/teensy-gfx.git noinstall src)
+    import_arduino_library_git(TeensyGFX https://github.com/newdigate/teensy-gfx.git main src)
 
     # add custom library
     teensy_add_library(my_teensy_library my_teensy_library.cpp)
@@ -132,7 +132,7 @@
     import_arduino_library_git(SerialFlash https://github.com/PaulStoffregen/SerialFlash.git master "" util)
     import_arduino_library_git(Wire https://github.com/PaulStoffregen/Wire.git master "" utility)
     import_arduino_library_git(arm_math https://github.com/PaulStoffregen/arm_math.git master src)
-    import_arduino_library_git(TeensyGFX https://github.com/newdigate/teensy-gfx.git noinstall src)
+    import_arduino_library_git(TeensyGFX https://github.com/newdigate/teensy-gfx.git main src)
   ```
 * link to std library
 ``` 
