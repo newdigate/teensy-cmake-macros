@@ -260,7 +260,6 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
     else ()
         list(APPEND Arduino_libraries_List "**${LIB_NAME}**")
         set(Arduino_libraries_List ${Arduino_libraries_List} CACHE INTERNAL "")
-        message(INFO ${Arduino_libraries_List})
         message(STATUS "import_arduino_library(${LIB_NAME} ${LIB_ROOT} ${ARGN})")
         # Check if we can find the library.
         if(NOT EXISTS "${LIB_ROOT}")
