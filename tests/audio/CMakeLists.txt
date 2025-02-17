@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(test_teensy_project_audio)
 
-# in this case we already have a local copy of teensy-cmake-macros (usually we wouldn't, we would use FetchContent below
-# include(../../CMakeLists.include.txt)
-
 include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
 
 import_arduino_library(cores ${teensy_cores_SOURCE_DIR}/teensy4 avr util)
