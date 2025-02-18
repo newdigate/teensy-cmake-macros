@@ -246,22 +246,26 @@ function(teensy_add_library TARGET)
         set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "${S_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
     endforeach(SOURCE_S ${SOURCES_S})
 
-    add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
-    if (COREPATH)
-        set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES ${COREPATH})
-    endif ()
-    set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
+    if (("${TEENSY_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_CPP_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_C_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_S_SOURCES}" STREQUAL ""))
+        message(WARN " Empty library (No sources - possibly a header-only library ) - ${TARGET} ")
+    else()
+        add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
+        if (COREPATH)
+            set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES ${COREPATH})
+        endif ()
+        set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
 
-    add_custom_command(OUTPUT ${TARGET}.hex 
-        COMMAND ${COMPILERPATH}arm-none-eabi-size ${ELFTARGET}
-        COMMAND ${COMPILERPATH}arm-none-eabi-objcopy -O ihex -R .eeprom ${ELFTARGET} ${TARGET}.hex
-        DEPENDS ${ELFTARGET}
-        COMMENT "Creating HEX file for ${ELFTARGET}")
+        add_custom_command(OUTPUT ${TARGET}.hex
+            COMMAND ${COMPILERPATH}arm-none-eabi-size ${ELFTARGET}
+            COMMAND ${COMPILERPATH}arm-none-eabi-objcopy -O ihex -R .eeprom ${ELFTARGET} ${TARGET}.hex
+            DEPENDS ${ELFTARGET}
+            COMMENT "Creating HEX file for ${ELFTARGET}")
+    endif()
 endfunction()
 
 macro(import_arduino_library LIB_NAME LIB_ROOT)
     if ("**${LIB_NAME}**" IN_LIST Arduino_libraries_List)
-        message(INFO "-- import_arduino_library -- ${LIB_NAME} is already imported...")
+        #message(INFO "-- import_arduino_library -- ${LIB_NAME} is already imported...")
     else ()
         list(APPEND Arduino_libraries_List "**${LIB_NAME}**")
         set(Arduino_libraries_List ${Arduino_libraries_List} CACHE INTERNAL "")
@@ -293,7 +297,7 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
             endforeach(SOURCE_S ${SOURCES_S})
 
             foreach(arg ${ARGN})
-                message(status " checking for ${LIB_ROOT}/${arg}")
+                #message(status " checking for ${LIB_ROOT}/${arg}")
                 if(NOT EXISTS ${LIB_ROOT}/${arg})
                     message(FATAL_ERROR "Could not find the Arduino library directory ${LIB_ROOT}/${arg}")
                 endif(NOT EXISTS ${LIB_ROOT}/${arg})
