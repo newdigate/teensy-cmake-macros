@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.24) # teensy_target_link_libraries uses $<LINK_GROUP> (CMake >= 3.24)
 # * you will need to define the following properies: (frmo https://github.com/newdigate/teensy-cmake-macros)
 #set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
 #set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
@@ -344,11 +344,25 @@ macro(teensy_include_directories)
     endforeach()
 endmacro(teensy_include_directories)
 
+# The arm-none-eabi linker resolves static archives left-to-right with --gc-sections,
+# so a library must precede the ones that satisfy its references. We wrap all libraries
+# in a linker group so the order they are passed in no longer matters (the linker
+# re-scans the group until every cross-reference resolves, circular deps included).
+# CMake only predefines the RESCAN feature for linkers it recognises; CMAKE_SYSTEM_NAME
+# is Generic here, so we define it ourselves with the GNU ld flags. Guarded so a future
+# CMake that does know this platform wins.
+if(NOT DEFINED CMAKE_LINK_GROUP_USING_RESCAN_SUPPORTED)
+    set(CMAKE_LINK_GROUP_USING_RESCAN "LINKER:--start-group" "LINKER:--end-group")
+    set(CMAKE_LINK_GROUP_USING_RESCAN_SUPPORTED TRUE)
+endif()
+
 macro(teensy_target_link_libraries TARGET)
-    set(list_var "${ARGN}")
+    set(list_var "${ARGN}") # ARGN is not a real variable in a macro; copy it before iterating
+    set(grouped_libs "")
     foreach(loop_var IN LISTS list_var)
-        target_link_libraries(${TARGET}.elf ${loop_var}.o)
+        list(APPEND grouped_libs ${loop_var}.o)
     endforeach()
+    target_link_libraries(${TARGET}.elf "$<LINK_GROUP:RESCAN,${grouped_libs}>")
 endmacro(teensy_target_link_libraries)
 
 macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)

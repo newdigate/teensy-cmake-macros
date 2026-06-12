@@ -1,2 +1,5 @@
 cmake-build-debug
 cmake-build-release
+.vscode
+.idea
+tests/audio/build-qemu
