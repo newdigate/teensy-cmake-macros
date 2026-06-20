@@ -36,8 +36,16 @@ SET(CMAKE_CXX_ARCHIVE_CREATE "${COMPILERPATH}/${build_command_ar} rcs <TARGET> <
 SET(CMAKE_C_ARCHIVE_CREATE "${COMPILERPATH}/${build_command_ar} rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
 
 function(teensy_set_dynamic_properties)
-    if (NOT DEFINED teensy_set_dynamic_properties_has_executed)
-        set(teensy_set_dynamic_properties_has_executed 1 CACHE INTERNAL "teensy_set_dynamic_properties_has_executed")
+    # Compute the flag strings once per configure run (this function is called by every
+    # teensy_add_executable/teensy_add_library). Guard with a GLOBAL property, NOT a cache
+    # variable: a cache var survives across configures, so a run that FATALed partway (e.g. a
+    # bad version block) would leave the guard set and the next configure would silently skip
+    # the recompute -> empty *_COMPILE_FLAGS/LINK_FLAGS and baffling downstream compiler errors.
+    # A global property resets each configure, so the block always re-runs (real errors
+    # re-surface every time) and changing TEENSY_VERSION/CPU_CORE_SPEED no longer needs a fresh
+    # build dir -- the CACHE INTERNAL flag vars below are overwritten on each recompute.
+    get_property(teensy_dynamic_properties_done GLOBAL PROPERTY teensy_dynamic_properties_done)
+    if (NOT teensy_dynamic_properties_done)
         message(STATUS "teensy_set_dynamic_properties()")
 
         if (NOT DEFINED CPU_CORE_SPEED)
@@ -144,6 +152,10 @@ function(teensy_set_dynamic_properties)
 
         #message(STATUS "S_COMPILE_FLAGS: ${S_COMPILE_FLAGS}")
         #message(STATUS "CPP_COMPILE_FLAGS: ${CPP_COMPILE_FLAGS}")
+
+        # Mark done only AFTER the flags are computed and cached, so a FATAL above can never
+        # leave a stale "done" marker that would skip the recompute on the next configure.
+        set_property(GLOBAL PROPERTY teensy_dynamic_properties_done 1)
     endif()
 endfunction()
 
