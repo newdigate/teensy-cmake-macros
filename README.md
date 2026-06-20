@@ -6,14 +6,13 @@
 [![eeprom-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/eeprom-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/eeprom-test.yml)
 [![spi-test](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/spi-test.yml/badge.svg)](https://github.com/newdigate/teensy-cmake-macros/actions/workflows/spi-test.yml)
 
- minimal dependency cmake toolchain to easily compile your teensy sketches and libraries, and optionally link with c++ std libraries. 
+ A minimal dependency cmake toolchain to easily compile your teensy sketches and libraries, and optionally link with c++ std libraries. 
 * custom teensy toolchain using ```cmake``` and ```arm-none-eabi-gcc```
 * based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template)
 * targetting Teensy 4.x, tested on Teensy 4.1 (should be easy to extend for 3.x)
 * compiles library code to .a archive files to avoid unnecessary recompiling
 
-# install build dependencies
-
+#  build dependencies
  * [arm-none-eabi-gcc](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
  * [cmake](https://cmake.org/)
 
@@ -72,7 +71,6 @@
 
 # build
   * run from a terminal in your repository root directory 
- 
   ```shell
   > mkdir cmake-build-debug
   > cd cmake-build-debug
@@ -80,7 +78,7 @@
   > make       
   ```
 
-## detail 
+# detail 
 * ```teensy_add_executable``` ( ```TARGET``` ```files...``` )
   ```cmake 
   teensy_add_executable(myapplication midiread.cpp)
