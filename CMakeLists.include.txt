@@ -1,12 +1,7 @@
 cmake_minimum_required(VERSION 3.24) # teensy_target_link_libraries uses $<LINK_GROUP> (CMake >= 3.24)
-# * you will need to define the following properies: (frmo https://github.com/newdigate/teensy-cmake-macros)
-#set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41 allowed)" FORCE)
-#set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
-#set(COMPILERPATH "/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/")
-
 include(FetchContent)
 FetchContent_Declare(teensy_cores
-        GIT_REPOSITORY https://github.com/PaulStoffregen/cores
+        GIT_REPOSITORY https://github.com/newdigate/teensy-cores
         GIT_TAG        master
 )
 FetchContent_MakeAvailable(teensy_cores)
