@@ -82,7 +82,6 @@ function(teensy_set_dynamic_properties)
             set(build_flags_ld " -Wl,--gc-sections,--relax ")
             set(build_core teensy4)
             set(build_mcu imxrt1062)
-            set(build_warn_data_percentage 99)
             set(build_flags_common "-g -Wall -ffunction-sections -fdata-sections ")
             set(build_flags_dep "-MMD")
             set(build_flags_optimize "-Os")
@@ -99,7 +98,6 @@ function(teensy_set_dynamic_properties)
             set(build_flags_ld " -Wl,--gc-sections,--relax ")
             set(build_core teensy4)
             set(build_mcu imxrt1062)
-            set(build_warn_data_percentage 99)
             set(build_flags_common "-g -Wall -ffunction-sections -fdata-sections ")
             set(build_flags_dep "-MMD")
             set(build_flags_optimize "-Os")
@@ -117,7 +115,6 @@ function(teensy_set_dynamic_properties)
             set(build_flags_ld " -Wl,--gc-sections,--relax ")
             set(build_core teensy4)
             set(build_mcu imxrt1062)
-            set(build_warn_data_percentage 99)
             set(build_flags_common "-g -Wall -ffunction-sections -fdata-sections ")
             set(build_flags_dep "-MMD")
             set(build_flags_optimize "-O2")
@@ -274,7 +271,7 @@ function(teensy_add_library TARGET)
     endforeach(SOURCE_S ${SOURCES_S})
 
     if (("${TEENSY_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_CPP_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_C_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_S_SOURCES}" STREQUAL ""))
-        message(WARN " Empty library (No sources - possibly a header-only library ) - ${TARGET} ")
+        message(WARNING " Empty library (No sources - possibly a header-only library ) - ${TARGET} ")
     else()
         add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
         if (COREPATH)
@@ -356,14 +353,6 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
     endif ()
 endmacro(import_arduino_library)
 
-macro(teensy_remove_sources LIB_DIR)
-    file(GLOB_RECURSE FILES_TO_REMOVE ABSOLUTE "${LIB_DIR}/**.*")
-    foreach(FILE_TO_REMOVE ${FILES_TO_REMOVE})
-        list(REMOVE_ITEM TEENSY_LIB_SOURCES ${FILE_TO_REMOVE})
-        message("REMOVED ${FILE_TO_REMOVE}")
-    endforeach(FILE_TO_REMOVE ${FILES_TO_REMOVE})
-endmacro(teensy_remove_sources)
-
 macro(teensy_include_directories)
     set(list_var "${ARGN}")
     foreach(loop_var IN LISTS list_var)
@@ -394,11 +383,17 @@ endmacro(teensy_target_link_libraries)
 
 macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
     include(FetchContent)
+    # Fetch sources only: these Arduino libraries are compiled directly with the Teensy
+    # board flags by import_arduino_library, never via their own build system. Point
+    # SOURCE_SUBDIR at a non-existent directory so FetchContent_MakeAvailable populates
+    # without calling add_subdirectory() on the library. (Single-argument
+    # FetchContent_Populate() is deprecated since CMake 3.30 / policy CMP0169.)
     FetchContent_Declare(${LIB_NAME}
             GIT_REPOSITORY ${LIB_URL}
             GIT_TAG        ${LIB_BRANCH}
+            SOURCE_SUBDIR  do_not_add_subdirectory
     )
-    FetchContent_Populate(${LIB_NAME})
+    FetchContent_MakeAvailable(${LIB_NAME})
     string(TOLOWER ${LIB_NAME} LIB_NAME_LOWER)
     set(LIB_ROOT "${${LIB_NAME_LOWER}_SOURCE_DIR}/${LIB_PATH}")
 
