@@ -12,47 +12,27 @@
 * targetting Teensy 4.x, tested on Teensy 4.1 (should be easy to extend for 3.x)
 * compiles library code to .a archive files to avoid unnecessary recompiling
 
-# Usage
-* add a toolchain cmake file `cmake\toolchains\teensy41.cmake`
-  * update ```COMPILERPATH``` to [arm-none-eabi-gcc](https://developer.arm.com/downloads/-/gnu-rm/10-3-2021-10) bin folder
-   ```cmake
-   set(TEENSY_VERSION 41 CACHE STRING "Set to the Teensy version corresponding to your board (30 or 31 allowed)" FORCE)
-   set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
-   set(CMAKE_EXE_LINKER_FLAGS "--specs=nosys.specs" CACHE INTERNAL "")
-   # set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "") # if you plan on using std 
-
-   #teensy compiler options
-   set(COMPILERPATH "/Applications/ARM/bin/")
-   
-   set(BUILD_FOR_TEENSY ON)
-   set(CMAKE_SYSTEM_NAME Generic)
-   set(CMAKE_SYSTEM_PROCESSOR arm)
-   set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
-   set(CMAKE_C_COMPILER ${COMPILERPATH}arm-none-eabi-gcc)
-   set(CMAKE_CXX_COMPILER ${COMPILERPATH}arm-none-eabi-g++)
-   set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
-   ``` 
-  * add include in your CMakeLists.txt file
-    ```cmake
-    include(FetchContent)
-    FetchContent_Declare(teensy_cmake_macros
-        GIT_REPOSITORY https://github.com/newdigate/teensy-cmake-macros
-        GIT_TAG        main
-    )
-    FetchContent_MakeAvailable(teensy_cmake_macros)
-    include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
-    ```
-* specify toolchain file in cmake configuration stage
-    ```shell
-    > cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE:FILEPATH="../cmake/toolchains/teensy41.cmake`
-    ```
-
 # install build dependencies
 
  * [arm-none-eabi-gcc](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
  * [cmake](https://cmake.org/)
 
 # add CMakeLists.txt to your project root
+  * add a toolchain cmake file `cmake\toolchains\teensy41.cmake`
+    * update ```COMPILERPATH``` to [arm-none-eabi-gcc](https://developer.arm.com/downloads/-/gnu-rm/10-3-2021-10) bin folder
+    ```cmake
+    set(TEENSY_VERSION 42 CACHE STRING "Set to the Teensy version corresponding to your board (40 or 41, 42 (RT1060-EVKB) allowed)" FORCE)
+    set(CPU_CORE_SPEED 600000000 CACHE STRING "Set to 24000000, 48000000, 72000000 or 96000000 to set CPU core speed" FORCE) # Derived variables
+    set(CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs" CACHE INTERNAL "") # if you plan on using std 
+    set(COMPILERPATH "/Applications/ARM_10/bin/")
+    set(CMAKE_SYSTEM_NAME Generic)
+    set(CMAKE_SYSTEM_PROCESSOR arm)
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+    set(CMAKE_C_COMPILER ${COMPILERPATH}arm-none-eabi-gcc)
+    set(CMAKE_CXX_COMPILER ${COMPILERPATH}arm-none-eabi-g++)
+    set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+    ```
+
   * create a ```CMakeLists.txt``` file in the root directory of your project
   ```cmake
     cmake_minimum_required(VERSION 3.5)
