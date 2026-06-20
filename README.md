@@ -122,6 +122,13 @@
    teensy_include_directories(../../src)
  ```
 
+# dependency caching (```CPM_SOURCE_CACHE```)
+Git libraries (```import_arduino_library_git```) are fetched with [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), bootstrapped automatically on first use (projects that only use ```import_arduino_library``` with local paths never download it). By default each project clones its own copy into its build directory. Set the ```CPM_SOURCE_CACHE``` environment variable to a stable path to clone each ```(repo, branch)``` **once** and share it across all of your projects and build directories:
+```shell
+export CPM_SOURCE_CACHE=$HOME/.cache/CPM
+```
+The cache is keyed by repo + branch, so different branches of the same library coexist without clobbering each other, while identical pins are downloaded only once.
+
 ## used in
 * [midi-smf-reader](https://github.com/newdigate/midi-smf-reader)
 * [teensy-quencer](https://github.com/newdigate/teensy-quencer)
