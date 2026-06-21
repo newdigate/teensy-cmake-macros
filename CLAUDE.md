@@ -36,7 +36,7 @@ Otherwise your changes are only seen after they are pushed to `main`.
 
 - `teensy_set_dynamic_properties()` — builds the per-language compile flags and link flags from `TEENSY_VERSION` (40, 41, or 42), `CPU_CORE_SPEED`, `COMPILERPATH`, `COREPATH` and hangs them on a single `teensy_flags` **INTERFACE** target (compile options via `$<COMPILE_LANGUAGE:…>` genexprs, include dirs via `target_include_directories`) that every `teensy_add_*`/imported library links — so flags propagate as CMake usage requirements instead of being stamped onto each source. Runs once per configure; the guard is just `if(NOT TARGET teensy_flags)`, which self-resets each configure (no cache var or global property that a half-done run could poison). FATAL if `CPU_CORE_SPEED` or `COMPILERPATH` is unset, or `TEENSY_VERSION` is not 40/41/42. Hardcodes `TEENSYDUINO=159`, `ARDUINO=10607`, `-std=gnu++17`, `-fno-exceptions -fno-rtti`. Called automatically by `teensy_add_executable`/`teensy_add_library`.
 - `import_teensy_cores()` — globs the core `.c/.cpp` under `COREPATH` and returns them in `TEENSY_SOURCES` (they pick up the flags from `teensy_flags` once a library folds them in). Optional: `teensy_add_library` folds `TEENSY_SOURCES` into every library, so calling this compiles the core into your libs instead of linking it as a separate `cores.o`. The tests don't use it — they build the core as a library via `import_arduino_library(cores ...)`.
-- `teensy_add_executable(TARGET srcs...)` — creates target **`TARGET.elf`** plus a `TARGET_hex` custom target that runs `arm-none-eabi-objcopy` to emit `TARGET.hex`. Accepts `.cpp` and `.ino` (compiled as C++). Only the listed sources go into the elf; the core and libraries are linked in separately via `teensy_target_link_libraries`.
+- `teensy_add_executable(TARGET srcs...)` — creates target **`TARGET.elf`** plus a `TARGET_hex` custom target that runs `arm-none-eabi-objcopy` to emit `TARGET.hex`. Accepts `.ino`/`.cpp` (compiled as C++) and `.c`. Only the listed sources go into the elf; the core and libraries are linked in separately via `teensy_target_link_libraries`.
 - `teensy_add_library(TARGET srcs...)` — creates a STATIC library target named **`TARGET.o`** (the `.o` suffix is part of the CMake target name, not a file). A library with no sources (header-only) is skipped with a warning.
 - `import_arduino_library(NAME ROOT [subdirs...])` — globs `.cpp/.c/.S` from a **local** `ROOT` (and each listed subdir), adds include dirs, and calls `teensy_add_library(NAME ...)`. Idempotent (tracked in `Arduino_libraries_List`). Missing `ROOT` is a warning (ignored); a missing named subdir is a fatal error.
 - `import_arduino_library_git(NAME URL BRANCH PATH [subdirs...])` — fetches a library from a git URL via **CPM.cmake** (`CPMAddPackage(... DOWNLOAD_ONLY YES)`; CPM is bootstrapped lazily on first use — pinned version + SHA256 — so projects that only call `import_arduino_library` never download it), then imports it via `import_arduino_library` from `<fetched>/PATH` (e.g. `PATH=src`, or `""` for the repo root). Set the `CPM_SOURCE_CACHE` env var to clone each `(repo, branch)` once and share it across all projects/build dirs (otherwise CPM clones per build dir, like plain FetchContent). This is how the tests pull in `SPI`, `SD`, `Audio`, etc.
@@ -48,20 +48,19 @@ Compile flags and include dirs are carried on a single `teensy_flags` `INTERFACE
 
 ## Required variables (set in the consumer toolchain file)
 
-`TEENSY_VERSION` (40, 41, or 42 for the RT1060-EVKB), `CPU_CORE_SPEED`, `COMPILERPATH` (arm-none-eabi bin dir, trailing slash). `COREPATH` defaults to the fetched core and only needs overriding if you supply your own. Two example toolchain files exist, both hardcoding `COMPILERPATH` (edit for your machine):
+`TEENSY_VERSION` (40, 41, or 42 for the RT1060-EVKB), `CPU_CORE_SPEED`, `COMPILERPATH` (arm-none-eabi bin dir, trailing slash). `COREPATH` defaults to the fetched core and only needs overriding if you supply your own. Consumers normally write their own toolchain file (see the README quick-start); the repo ships one example:
 
-- `cmake/toolchain/teensy41.toolchain.cmake` — `--specs=nano.specs` (links the C++ std lib); `COMPILERPATH=/Applications/ARM_10/bin/`. Used by `tests/st7735/build.sh`.
-- `tests/teensy41.toolchain.cmake` — `--specs=nosys.specs`, plus a legacy `DEPSPATH` for the local-clone (`import_arduino_library`) workflow.
+- `tests/teensy41.toolchain.cmake` — `TEENSY_VERSION 41`, `--specs=nosys.specs`, `COMPILERPATH` hardcoded to the CI path `/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/` (a macOS `/Applications/ARM/bin/` alternative is commented out). Edit `COMPILERPATH` for your machine.
 
 ## Build commands
 
-Nothing to install. Build a test/consumer project by configuring it with a Teensy toolchain file, then `make`. Example (`tests/st7735`, which has a `build.sh`):
+Nothing to install. Build a test/consumer project by configuring it with a Teensy toolchain file, then `make`. Example (`tests/spi`):
 
 ```shell
-cd tests/st7735
+cd tests/spi
 mkdir -p cmake-build-debug && cd cmake-build-debug
 cmake -DCMAKE_BUILD_TYPE=Debug \
-      -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../../../cmake/toolchain/teensy41.toolchain.cmake ..
+      -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../../teensy41.toolchain.cmake ..
 make
 ```
 
@@ -69,9 +68,9 @@ To exercise local macro edits, add `-DFETCHCONTENT_SOURCE_DIR_TEENSY_CMAKE_MACRO
 
 ## Tests & CI
 
-Each subdir of `tests/` (`basic`, `spi`, `audio`, `eeprom`, `vector`, `st7735`) is an independent consumer project with its own `CMakeLists.txt`, exercising a different dependency set; each fetches the macros, the core, and its libraries via `FetchContent`.
+Each subdir of `tests/` (`basic`, `spi`, `audio`, `eeprom`, `vector`) is an independent consumer project with its own `CMakeLists.txt`, exercising a different dependency set; each fetches the macros, the core, and its libraries via `FetchContent`.
 
-GitHub Actions has one workflow per test in `.github/workflows/` (`audio-test`, `basic-test`, `eeprom-test`, `spi-test`, `vector` — there is no `st7735` workflow yet). Each checks out the repo, downloads the ARM 9-2019-q4 toolchain to `/opt`, then configures+builds that one test with a toolchain file. Dependencies come from `FetchContent`, not a manual `deps/` clone.
+GitHub Actions has one workflow per test in `.github/workflows/` (`audio-test`, `basic-test`, `eeprom-test`, `spi-test`, `vector`). Each checks out the repo, downloads the ARM 9-2019-q4 toolchain to `/opt`, then configures+builds that one test with a toolchain file. Dependencies come from `FetchContent`, not a manual `deps/` clone.
 
 `tests/vector` is the reference for linking the C++ std library: set `CMAKE_EXE_LINKER_FLAGS "--specs=nano.specs"` and `target_link_libraries(<target>.elf stdc++)` (note the `.elf` suffix and raw `target_link_libraries`, not the `teensy_` wrapper).
 
