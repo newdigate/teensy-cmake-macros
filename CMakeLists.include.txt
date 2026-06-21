@@ -381,21 +381,51 @@ macro(teensy_target_link_libraries TARGET)
     target_link_libraries(${TARGET}.elf "$<LINK_GROUP:RESCAN,${grouped_libs}>")
 endmacro(teensy_target_link_libraries)
 
+# Bootstrap CPM.cmake (https://github.com/cpm-cmake/CPM.cmake) on first use. CPM is a thin
+# wrapper over FetchContent that adds a shared, tag-aware source cache: set the environment
+# variable CPM_SOURCE_CACHE to a stable path (e.g. ~/.cache/CPM) and each (repo, tag) is
+# cloned once and reused across every project and build directory, instead of FetchContent's
+# per-build-dir clone. Lazy: consumers that only use import_arduino_library (local paths)
+# never download CPM.
+macro(_teensy_bootstrap_cpm)
+    if(NOT COMMAND CPMAddPackage)
+        set(_cpm_version 0.42.3)
+        set(_cpm_sha256 a609e875fd532b067174250f6abbc3dac22fe2d64869783fb1e80bda1625c844)
+        if(DEFINED ENV{CPM_SOURCE_CACHE})
+            set(_cpm_file "$ENV{CPM_SOURCE_CACHE}/cpm/CPM_${_cpm_version}.cmake")
+        else()
+            set(_cpm_file "${CMAKE_BINARY_DIR}/cmake/CPM_${_cpm_version}.cmake")
+        endif()
+        if(NOT EXISTS "${_cpm_file}")
+            message(STATUS "Downloading CPM.cmake v${_cpm_version}")
+            file(DOWNLOAD
+                "https://github.com/cpm-cmake/CPM.cmake/releases/download/v${_cpm_version}/CPM.cmake"
+                "${_cpm_file}"
+                EXPECTED_HASH SHA256=${_cpm_sha256})
+        endif()
+        include("${_cpm_file}")
+    endif()
+endmacro()
+
 macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
-    include(FetchContent)
-    # Fetch sources only: these Arduino libraries are compiled directly with the Teensy
-    # board flags by import_arduino_library, never via their own build system. Point
-    # SOURCE_SUBDIR at a non-existent directory so FetchContent_MakeAvailable populates
-    # without calling add_subdirectory() on the library. (Single-argument
-    # FetchContent_Populate() is deprecated since CMake 3.30 / policy CMP0169.)
-    FetchContent_Declare(${LIB_NAME}
-            GIT_REPOSITORY ${LIB_URL}
-            GIT_TAG        ${LIB_BRANCH}
-            SOURCE_SUBDIR  do_not_add_subdirectory
+    _teensy_bootstrap_cpm()
+    # Fetch sources only (DOWNLOAD_ONLY): the library is compiled with the Teensy board flags
+    # by import_arduino_library, not via its own build system. With CPM_SOURCE_CACHE set, each
+    # (repo, tag) is cloned once and shared across all projects and build directories.
+    CPMAddPackage(
+        NAME           ${LIB_NAME}
+        GIT_REPOSITORY ${LIB_URL}
+        GIT_TAG        ${LIB_BRANCH}
+        DOWNLOAD_ONLY  YES
     )
-    FetchContent_MakeAvailable(${LIB_NAME})
-    string(TOLOWER ${LIB_NAME} LIB_NAME_LOWER)
-    set(LIB_ROOT "${${LIB_NAME_LOWER}_SOURCE_DIR}/${LIB_PATH}")
+    # CPM exports <NAME>_SOURCE_DIR (original case); fall back to the lower-case FetchContent
+    # form just in case.
+    if(DEFINED ${LIB_NAME}_SOURCE_DIR)
+        set(LIB_ROOT "${${LIB_NAME}_SOURCE_DIR}/${LIB_PATH}")
+    else()
+        string(TOLOWER ${LIB_NAME} LIB_NAME_LOWER)
+        set(LIB_ROOT "${${LIB_NAME_LOWER}_SOURCE_DIR}/${LIB_PATH}")
+    endif()
 
     # Check if we can find the library.
     if(NOT EXISTS "${LIB_ROOT}")
