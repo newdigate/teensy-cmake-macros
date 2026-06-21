@@ -4,11 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A minimal CMake toolchain + macro package for cross-compiling Teensy 4.x (4.0/4.1) firmware and libraries with `arm-none-eabi-gcc`, without the Arduino IDE. It targets Teensy 4.1 (tested) and can be extended for 3.x. Library code is compiled to `.a` archives to avoid unnecessary recompilation. Based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template).
+A minimal CMake toolchain + macro package for cross-compiling Teensy 4.x (4.0/4.1) firmware and libraries with `arm-none-eabi-gcc`, without the Arduino IDE. It targets Teensy 4.1 (tested) and the NXP **i.MX RT1060-EVKB** evaluation board (`TEENSY_VERSION 42`), and can be extended for 3.x. Library code is compiled to `.a` archives to avoid unnecessary recompilation. Based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template).
 
 **The entire product is one file: `CMakeLists.include.txt`.** Everything else (`cmake/`, `tests/`) exists to configure or exercise it. When changing macro behavior, you are almost always editing `CMakeLists.include.txt`.
 
 **Requires CMake ≥ 3.24** — `teensy_target_link_libraries` uses the `$<LINK_GROUP>` generator expression.
+
+## Boards
+
+`TEENSY_VERSION` (set in the consumer toolchain file) selects the target board:
+
+- `40` / `41` — Teensy 4.0 / 4.1 — `-DARDUINO_TEENSY40` / `-DARDUINO_TEENSY41`, linker script `imxrt1062.ld` / `imxrt1062_t41.ld`.
+- `42` — NXP **i.MX RT1060-EVKB** evaluation board — `-DARDUINO_MIMXRT1060_EVKB`, linker script `imxrt1060_evkb.ld`, boots from QSPI flash (entry `0x60001000`). Its pin tables and linker script live in the `newdigate/teensy-cores` fork.
+
+All three are the same `__IMXRT1062__` MCU (Cortex-M7, hard-float `fpv5-d16`); the board-specific flags are assembled in `teensy_set_dynamic_properties()`.
 
 ## Architecture
 
