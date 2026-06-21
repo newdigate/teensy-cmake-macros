@@ -36,16 +36,12 @@ SET(CMAKE_CXX_ARCHIVE_CREATE "${COMPILERPATH}/${build_command_ar} rcs <TARGET> <
 SET(CMAKE_C_ARCHIVE_CREATE "${COMPILERPATH}/${build_command_ar} rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
 
 function(teensy_set_dynamic_properties)
-    # Compute the flag strings once per configure run (this function is called by every
-    # teensy_add_executable/teensy_add_library). Guard with a GLOBAL property, NOT a cache
-    # variable: a cache var survives across configures, so a run that FATALed partway (e.g. a
-    # bad version block) would leave the guard set and the next configure would silently skip
-    # the recompute -> empty *_COMPILE_FLAGS/LINK_FLAGS and baffling downstream compiler errors.
-    # A global property resets each configure, so the block always re-runs (real errors
-    # re-surface every time) and changing TEENSY_VERSION/CPU_CORE_SPEED no longer needs a fresh
-    # build dir -- the CACHE INTERNAL flag vars below are overwritten on each recompute.
-    get_property(teensy_dynamic_properties_done GLOBAL PROPERTY teensy_dynamic_properties_done)
-    if (NOT teensy_dynamic_properties_done)
+    # Build the `teensy_flags` INTERFACE target once per configure. The target's existence IS
+    # the guard: CMake targets do not persist across configures, so a configure that FATALs
+    # partway re-runs cleanly next time -- there is no cached state to poison it. Every
+    # teensy_add_executable/teensy_add_library links `teensy_flags`, so the compile options and
+    # include dirs propagate automatically instead of being stamped onto each source by hand.
+    if (NOT TARGET teensy_flags)
         message(STATUS "teensy_set_dynamic_properties()")
 
         if (NOT DEFINED CPU_CORE_SPEED)
@@ -142,34 +138,36 @@ function(teensy_set_dynamic_properties)
         set(S_COMPILE_FLAGS     "${build_flags_optimize} ${build_flags_common} ${build_flags_dep} ${build_flags_S} ${build_flags_cpu} ${build_flags_defs} -DARDUINO=${arduino_ide_version} -DARDUINO_${build_board} -DF_CPU=${build_fcpu} -D${build_usbtype} -DLAYOUT_${build_keylayout}")
         set(LINK_FLAGS          "${build_flags_optimize} ${build_flags_ld} ${build_flags_ldspecs} ${build_flags_cpu} -T${LINKER_FILE} ${build_flags_libs}")
 
-        set(CPP_COMPILE_FLAGS   ${CPP_COMPILE_FLAGS} CACHE INTERNAL "CPP_COMPILE_FLAGS")
-        set(C_COMPILE_FLAGS     ${C_COMPILE_FLAGS}   CACHE INTERNAL "C_COMPILE_FLAGS")
-        set(S_COMPILE_FLAGS     ${S_COMPILE_FLAGS}   CACHE INTERNAL "S_COMPILE_FLAGS")
-        set(LINK_FLAGS          ${LINK_FLAGS}        CACHE INTERNAL "LINK_FLAGS")
+        # Carry the flags on an INTERFACE target instead of CACHE INTERNAL globals + per-source
+        # COMPILE_FLAGS stamping. Compile options are split per language with COMPILE_LANGUAGE
+        # genexprs, each token wrapped individually (a bare ;-list inside a genexpr would be
+        # split by its own semicolons). Link flags stay exe-only -- stored as a property and
+        # applied in teensy_add_executable -- so they never propagate transitively and duplicate
+        # the linker script. (.S sources are set to LANGUAGE C in teensy_add_library, so they
+        # pick up the C options here plus a per-source -x assembler-with-cpp.)
+        separate_arguments(_teensy_c_opts   NATIVE_COMMAND "${C_COMPILE_FLAGS}")
+        separate_arguments(_teensy_cxx_opts NATIVE_COMMAND "${CPP_COMPILE_FLAGS}")
+        set(_teensy_compile_opts "")
+        foreach(_opt IN LISTS _teensy_c_opts)
+            list(APPEND _teensy_compile_opts "$<$<COMPILE_LANGUAGE:C>:${_opt}>")
+        endforeach()
+        foreach(_opt IN LISTS _teensy_cxx_opts)
+            list(APPEND _teensy_compile_opts "$<$<COMPILE_LANGUAGE:CXX>:${_opt}>")
+        endforeach()
 
-        #message(STATUS "S_COMPILE_FLAGS: ${S_COMPILE_FLAGS}")
-        #message(STATUS "CPP_COMPILE_FLAGS: ${CPP_COMPILE_FLAGS}")
-
-        # Mark done only AFTER the flags are computed and cached, so a FATAL above can never
-        # leave a stale "done" marker that would skip the recompute on the next configure.
-        set_property(GLOBAL PROPERTY teensy_dynamic_properties_done 1)
+        add_library(teensy_flags INTERFACE)
+        target_compile_options(teensy_flags INTERFACE ${_teensy_compile_opts})
+        target_include_directories(teensy_flags INTERFACE "${COREPATH}")
+        set_property(TARGET teensy_flags PROPERTY INTERFACE_TEENSY_LINK_FLAGS "${LINK_FLAGS}")
     endif()
 endfunction()
 
 function(import_teensy_cores)
     message(STATUS "import_teensy_cores()")
 
+    # Flags are applied by linking `teensy_flags` in whatever library folds these sources in.
     file(GLOB_RECURSE TEENSY_C_FILES ABSOLUTE ${COREPATH}**.c)
-    foreach(SOURCE_C ${TEENSY_C_FILES})
-        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS}")
-        #message(STATUS "     .c:   ${SOURCE_C}  ${C_COMPILE_FLAGS}")
-    endforeach(SOURCE_C ${SOURCES_C})
-
     file(GLOB_RECURSE TEENSY_CPP_FILES ${COREPATH}**.cpp)
-    foreach(SOURCE_CPP ${TEENSY_CPP_FILES})
-        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS}")
-        #message(STATUS "     .cpp: ${SOURCE_CPP} ${CPP_COMPILE_FLAGS}")
-    endforeach(SOURCE_CPP ${SOURCES_CPP})
 
     set(TEENSY_SOURCES ${TEENSY_C_FILES} ${TEENSY_CPP_FILES} PARENT_SCOPE)
 endfunction()
@@ -182,44 +180,23 @@ function(teensy_add_executable TARGET)
     teensy_set_dynamic_properties()
     
     set(ELFTARGET ${TARGET}.elf)
+
+    # .ino sketches are compiled as C++ (CMake does not recognise the extension).
     foreach(arg IN LISTS ARGN)
-        file(GLOB TEST_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
-        list(FILTER TEST_SOURCE INCLUDE REGEX ".cpp$")
-        set(TEENSY_EXE_CPP_SOURCES ${TEENSY_EXE_CPP_SOURCES} ${TEST_SOURCE}) 
-
-        file(GLOB INO_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
-        list(FILTER INO_SOURCE INCLUDE REGEX ".ino$")
-        set(TEENSY_EXE_INO_SOURCES ${TEENSY_EXE_INO_SOURCES} ${INO_SOURCE})
-
-        file(GLOB C_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${arg})
-        list(FILTER C_SOURCE INCLUDE REGEX ".c$")
-        set(TEENSY_EXE_C_SOURCES ${TEENSY_EXE_C_SOURCES} ${C_SOURCE})
+        if (arg MATCHES "\\.ino$")
+            set_source_files_properties(${arg} PROPERTIES LANGUAGE CXX)
+            set_source_files_properties(${arg} PROPERTIES COMPILE_OPTIONS "-x;c++")
+        endif()
     endforeach()
 
-    foreach(SOURCE_CPP ${TEENSY_EXE_CPP_SOURCES})
-        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
-    endforeach(SOURCE_CPP ${TEENSY_EXE_CPP_SOURCES})
-
-    foreach(SOURCE_C ${TEENSY_EXE_C_SOURCES})
-        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
-    endforeach(SOURCE_C ${TEENSY_EXE_C_SOURCES})
-
-    #foreach(SOURCE_S ${TEENSY_LIB_S_SOURCES})
-    #    set_property(SOURCE ${SOURCE_S} PROPERTY LANGUAGE C)
-    #    set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "${S_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
-    #endforeach(SOURCE_S ${TEENSY_LIB_S_SOURCES})
-
-    foreach(SOURCE_INO ${TEENSY_EXE_INO_SOURCES})
-        set_property(SOURCE ${SOURCE_INO} PROPERTY LANGUAGE CXX)
-        set_source_files_properties(${SOURCE_INO} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES} -x c++")
-    endforeach(SOURCE_INO ${TEENSY_EXE_INO_SOURCES})
-
     add_executable(${ELFTARGET} ${ARGN})
-#    add_executable(${ELFTARGET} ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
+    target_link_libraries(${ELFTARGET} teensy_flags)   # compile options + include dirs (plain sig: consumers use plain target_link_libraries too)
 
-    set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES "${COREPATH}")
-    set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
-    
+    # Link flags (linker script, --gc-sections, -lm, cpu/float-abi) are exe-only -- kept off the
+    # INTERFACE target so they cannot propagate transitively and duplicate the linker script.
+    get_target_property(_teensy_ld teensy_flags INTERFACE_TEENSY_LINK_FLAGS)
+    set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${_teensy_ld}")
+
     add_custom_command(OUTPUT ${TARGET}.hex
             COMMAND ${COMPILERPATH}arm-none-eabi-size ${ELFTARGET}
             COMMAND ${COMPILERPATH}arm-none-eabi-objcopy -O ihex -R .eeprom ${ELFTARGET} ${TARGET}.hex
@@ -257,27 +234,18 @@ function(teensy_add_library TARGET)
     #message(STATUS TEENSY_LIB_C_SOURCES: ${TEENSY_LIB_C_SOURCES})
     #message(STATUS TEENSY_LIB_CPP_SOURCES: ${TEENSY_LIB_CPP_SOURCES})
 
-    foreach(SOURCE_CPP ${TEENSY_LIB_CPP_SOURCES})
-        set_source_files_properties(${SOURCE_CPP} PROPERTIES COMPILE_FLAGS "${CPP_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
-    endforeach(SOURCE_CPP ${SOURCES_CPP})
-
-    foreach(SOURCE_C ${TEENSY_LIB_C_SOURCES})
-        set_source_files_properties(${SOURCE_C} PROPERTIES COMPILE_FLAGS "${C_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
-    endforeach(SOURCE_C ${SOURCES_C})
-
+    # .S is built by the C compiler as preprocessed assembly (so the consumer project does not
+    # need ASM enabled); the C-language options from teensy_flags still apply to it.
     foreach(SOURCE_S ${TEENSY_LIB_S_SOURCES})
-        set_property(SOURCE ${SOURCE_S} PROPERTY LANGUAGE C)
-        set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_FLAGS "${S_COMPILE_FLAGS} ${INCLUDE_DIRECTORIES}")
-    endforeach(SOURCE_S ${SOURCES_S})
+        set_source_files_properties(${SOURCE_S} PROPERTIES LANGUAGE C)
+        set_source_files_properties(${SOURCE_S} PROPERTIES COMPILE_OPTIONS "-x;assembler-with-cpp")
+    endforeach()
 
     if (("${TEENSY_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_CPP_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_C_SOURCES}" STREQUAL "") AND ("${TEENSY_LIB_S_SOURCES}" STREQUAL ""))
         message(WARNING " Empty library (No sources - possibly a header-only library ) - ${TARGET} ")
     else()
         add_library(${ELFTARGET} STATIC ${ARGN} ${TEENSY_SOURCES} ${TEENSY_LIB_CPP_SOURCES} ${TEENSY_LIB_C_SOURCES} ${TEENSY_LIB_S_SOURCES})
-        if (COREPATH)
-            set_target_properties(${ELFTARGET} PROPERTIES INCLUDE_DIRECTORIES ${COREPATH})
-        endif ()
-        set_target_properties(${ELFTARGET} PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
+        target_link_libraries(${ELFTARGET} teensy_flags)   # compile options + include dirs (plain sig: consumers use plain target_link_libraries too)
 
         add_custom_command(OUTPUT ${TARGET}.hex
             COMMAND ${COMPILERPATH}arm-none-eabi-size ${ELFTARGET}
@@ -299,8 +267,8 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
         if(NOT EXISTS "${LIB_ROOT}")
             message(STATUS "Could not find the directory for library '${LIB_ROOT}' -- ignoring (its possible that the library is not used for the target you are calling) !!!!!")
         else()
-            set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_ROOT} ")
-            include_directories("${LIB_ROOT}")
+            teensy_set_dynamic_properties()   # ensure the teensy_flags target exists
+            target_include_directories(teensy_flags INTERFACE "${LIB_ROOT}")
 
             set(IMPORT_LIB_CPP_SOURCES "")
             set(IMPORT_LIB_C_SOURCES "")
@@ -327,8 +295,7 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
                 if(NOT EXISTS ${LIB_ROOT}/${arg})
                     message(FATAL_ERROR "Could not find the Arduino library directory ${LIB_ROOT}/${arg}")
                 endif(NOT EXISTS ${LIB_ROOT}/${arg})
-                include_directories("${LIB_ROOT}/${arg}")
-                set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${LIB_ROOT}/${arg} ")
+                target_include_directories(teensy_flags INTERFACE "${LIB_ROOT}/${arg}")
 
                 # Mark source files to be built along with the sketch code.
                 file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/${arg}/*.cpp")
@@ -354,9 +321,10 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
 endmacro(import_arduino_library)
 
 macro(teensy_include_directories)
+    teensy_set_dynamic_properties()   # ensure the teensy_flags target exists
     set(list_var "${ARGN}")
     foreach(loop_var IN LISTS list_var)
-        set(INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES} -I${CMAKE_CURRENT_SOURCE_DIR}/${loop_var} ")
+        target_include_directories(teensy_flags INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
     endforeach()
 endmacro(teensy_include_directories)
 
