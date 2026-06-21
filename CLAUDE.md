@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A minimal CMake toolchain + macro package for cross-compiling Teensy 4.x (4.0/4.1) firmware and libraries with `arm-none-eabi-gcc`, without the Arduino IDE. It targets Teensy 4.1 (tested) and the NXP **i.MX RT1060-EVKB** evaluation board (`TEENSY_VERSION 42`), and can be extended for 3.x. Library code is compiled to `.a` archives to avoid unnecessary recompilation. Based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template).
+A minimal CMake toolchain + macro package for cross-compiling Teensy 4.x (4.0/4.1) firmware and libraries with `arm-none-eabi-gcc`, without the Arduino IDE. It targets Teensy 4.1 (tested) and the NXP **i.MX RT1060-EVKB** evaluation board (`TEENSY_VERSION 42`), and can be extended for 3.x. Library code is compiled to `.a` archives to avoid unnecessary recompilation. Based on [ronj/teensy-cmake-template](https://github.com/ronj/teensy-cmake-template). A companion Node.js tool, [convert-arduino-example-skill](https://github.com/newdigate/convert-arduino-example-skill), converts existing Teensyduino sketches into consumer projects that use these macros.
 
 **The entire product is one file: `CMakeLists.include.txt`.** Everything else (`cmake/`, `tests/`) exists to configure or exercise it. When changing macro behavior, you are almost always editing `CMakeLists.include.txt`.
 

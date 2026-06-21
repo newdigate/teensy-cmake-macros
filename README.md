@@ -76,6 +76,16 @@ make
 
 You get `my_firmware.elf` and `my_firmware.hex`, ready to flash. A passing build means it compiles and links — there is no on-device check.
 
+## Converting an existing Arduino/Teensyduino sketch
+
+Already have a sketch? [convert-arduino-example-skill](https://github.com/newdigate/convert-arduino-example-skill) is a companion Node.js tool that turns a Teensyduino sketch (or a whole folder of them) into a ready-to-build teensy-cmake-macros project — it generates the `CMakeLists.txt`, the toolchain file, and a compilable `.cpp` (injecting `Arduino.h` and forward prototypes, mapping `#include`s to git libraries):
+
+```shell
+node bin/convert-sketch.js path/to/Sketch.ino --board 41
+```
+
+It's a work in progress — check its [issues](https://github.com/newdigate/convert-arduino-example-skill/issues) for current limitations.
+
 ## Macros
 
 | macro | what it does |
