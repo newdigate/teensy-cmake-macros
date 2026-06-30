@@ -1,12 +1,19 @@
 cmake_minimum_required(VERSION 3.24) # teensy_target_link_libraries uses $<LINK_GROUP> (CMake >= 3.24)
 include(FetchContent)
-FetchContent_Declare(teensy_cores
-        GIT_REPOSITORY https://github.com/newdigate/teensy-cores
-        GIT_TAG        master
-)
-FetchContent_MakeAvailable(teensy_cores)
-# * core path will be set as below by default. you can change if necessary
-set(COREPATH "${teensy_cores_SOURCE_DIR}/teensy4/")
+# COREPATH may be supplied by the consumer (e.g. the imxrt1176 core lives in a
+# local repo, not the fetched teensy-cores fork). Only fetch the Teensy 4 core
+# and default COREPATH to it when the consumer has not already set COREPATH.
+# This keeps the TEENSY_VERSION 40/41/42 path unchanged while letting the 117
+# (RT1170-EVKB) profile point COREPATH/LINKER_FILE at its own local core.
+if (NOT DEFINED COREPATH)
+    FetchContent_Declare(teensy_cores
+            GIT_REPOSITORY https://github.com/newdigate/teensy-cores
+            GIT_TAG        master
+    )
+    FetchContent_MakeAvailable(teensy_cores)
+    # * core path will be set as below by default. you can change if necessary
+    set(COREPATH "${teensy_cores_SOURCE_DIR}/teensy4/")
+endif()
 
 if (APPLE)
     set(CMAKE_OSX_SYSROOT "")
@@ -92,8 +99,8 @@ function(teensy_set_dynamic_properties)
             set(LINKER_FILE ${COREPATH}imxrt1176.ld)
             set(build_board MIMXRT1170_EVKB)
             set(build_flags_ld " -Wl,--gc-sections,--relax ")
-            set(build_core teensy4)
-            set(build_mcu imxrt1062)
+            set(build_core imxrt1176)
+            set(build_mcu imxrt1176)
             set(build_flags_common "-g -Wall -ffunction-sections -fdata-sections ")
             set(build_flags_dep "-MMD")
             set(build_flags_optimize "-Os")
