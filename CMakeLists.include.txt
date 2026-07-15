@@ -190,8 +190,10 @@ function(import_teensy_cores)
     message(STATUS "import_teensy_cores()")
 
     # Flags are applied by linking `teensy_flags` in whatever library folds these sources in.
-    file(GLOB_RECURSE TEENSY_C_FILES ABSOLUTE ${COREPATH}**.c)
-    file(GLOB_RECURSE TEENSY_CPP_FILES ${COREPATH}**.cpp)
+    # CONFIGURE_DEPENDS: re-glob at build time so a core source added/removed after the
+    # first configure is picked up without a manual clean (see import_arduino_library).
+    file(GLOB_RECURSE TEENSY_C_FILES CONFIGURE_DEPENDS ABSOLUTE ${COREPATH}**.c)
+    file(GLOB_RECURSE TEENSY_CPP_FILES CONFIGURE_DEPENDS ${COREPATH}**.cpp)
 
     set(TEENSY_SOURCES ${TEENSY_C_FILES} ${TEENSY_CPP_FILES} PARENT_SCOPE)
 endfunction()
@@ -299,17 +301,20 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
             set(IMPORT_LIB_S_SOURCES "")
 
             # Mark source files to be built along with the sketch code.
-            file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/*.cpp")
+            # CONFIGURE_DEPENDS: re-glob at build time so a source added/removed after this
+            # build dir's first configure is picked up automatically (CMake re-runs configure
+            # when the glob result changes), instead of silently keeping the stale file list.
+            file(GLOB SOURCES_CPP CONFIGURE_DEPENDS ABSOLUTE "${LIB_ROOT}/*.cpp")
             foreach(SOURCE_CPP ${SOURCES_CPP})
                 set(IMPORT_LIB_CPP_SOURCES ${IMPORT_LIB_CPP_SOURCES} ${SOURCE_CPP})
             endforeach(SOURCE_CPP ${SOURCES_CPP})
 
-            file(GLOB SOURCES_C ABSOLUTE "${LIB_ROOT}/*.c")
+            file(GLOB SOURCES_C CONFIGURE_DEPENDS ABSOLUTE "${LIB_ROOT}/*.c")
             foreach(SOURCE_C ${SOURCES_C})
                 set(IMPORT_LIB_C_SOURCES ${IMPORT_LIB_C_SOURCES} ${SOURCE_C})
             endforeach(SOURCE_C ${SOURCES_C})
 
-            file(GLOB SOURCES_S ABSOLUTE "${LIB_ROOT}/*.S")
+            file(GLOB SOURCES_S CONFIGURE_DEPENDS ABSOLUTE "${LIB_ROOT}/*.S")
             foreach(SOURCE_S ${SOURCES_S})
                 set(IMPORT_LIB_S_SOURCES ${IMPORT_LIB_S_SOURCES} ${SOURCE_S})
             endforeach(SOURCE_S ${SOURCES_S})
@@ -322,17 +327,18 @@ macro(import_arduino_library LIB_NAME LIB_ROOT)
                 target_include_directories(teensy_flags INTERFACE "${LIB_ROOT}/${arg}")
 
                 # Mark source files to be built along with the sketch code.
-                file(GLOB SOURCES_CPP ABSOLUTE "${LIB_ROOT}/${arg}/*.cpp")
+                # CONFIGURE_DEPENDS: same rationale as the root-dir globs above.
+                file(GLOB SOURCES_CPP CONFIGURE_DEPENDS ABSOLUTE "${LIB_ROOT}/${arg}/*.cpp")
                 foreach(SOURCE_CPP ${SOURCES_CPP})
                     set(IMPORT_LIB_CPP_SOURCES ${IMPORT_LIB_CPP_SOURCES} ${SOURCE_CPP})
                 endforeach(SOURCE_CPP ${SOURCES_CPP})
 
-                file(GLOB SOURCES_C ABSOLUTE "${LIB_ROOT}/${arg}/*.c")
+                file(GLOB SOURCES_C CONFIGURE_DEPENDS ABSOLUTE "${LIB_ROOT}/${arg}/*.c")
                 foreach(SOURCE_C ${SOURCES_C})
                     set(IMPORT_LIB_C_SOURCES ${IMPORT_LIB_C_SOURCES} ${SOURCE_C})
                 endforeach(SOURCE_C ${SOURCES_C})
 
-                file(GLOB SOURCES_S ABSOLUTE "${LIB_ROOT}/${arg}/*.S")
+                file(GLOB SOURCES_S CONFIGURE_DEPENDS ABSOLUTE "${LIB_ROOT}/${arg}/*.S")
                 foreach(SOURCE_S ${SOURCES_S})
                     set(IMPORT_LIB_S_SOURCES ${IMPORT_LIB_S_SOURCES} ${SOURCE_S})
                 endforeach(SOURCE_S ${SOURCES_S})
