@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.24) # teensy_target_link_libraries uses $<LINK_GROUP> (CMake >= 3.24)
 include(FetchContent)
+
+# Directory of this macros file, captured at include() time so functions can
+# locate sibling helper scripts (CMAKE_CURRENT_LIST_DIR inside a function body
+# resolves to the *caller's* list file, not this one).
+set(TEENSY_CMAKE_MACROS_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "teensy-cmake-macros dir")
 # COREPATH may be supplied by the consumer (e.g. the imxrt1176 core lives in a
 # local repo, not the fetched teensy-cores fork). Only fetch the Teensy 4 core
 # and default COREPATH to it when the consumer has not already set COREPATH.
@@ -433,3 +438,80 @@ macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
     endif(NOT EXISTS "${LIB_ROOT}")
 
 endmacro(import_arduino_library_git)
+
+# --- Dual-core (RT1176) CM4 secondary-image support --------------------------
+# The RT1176 CM7 (main core) can boot a Cortex-M4 secondary core from an image
+# staged into the CM4 TCM backdoor. The CM4 image is a standalone bare-metal
+# binary with its OWN startup + linker (NOT the Arduino core, NOT the M7 flags),
+# compiled for cortex-m4 and embedded into the CM7 firmware as a uint32_t array.
+#
+#   teensy_add_cm4_image(<name> LINKER <cm4.ld> SOURCES <a.S> <b.c> ...)
+#       Compiles/links the CM4 image and generates
+#       ${CMAKE_CURRENT_BINARY_DIR}/<name>.h with `static const uint32_t
+#       <name>[]` (the objcopy'd binary). Creates target <name>_image.
+#
+#   teensy_target_link_cm4_image(<exe> <name>)
+#       Makes <exe>.elf depend on the generated header and adds its directory to
+#       <exe>.elf's include path, so the CM7 sketch can `#include "<name>.h"`.
+#
+# The CM7 stages the array with a runtime copy (e.g. RT1176 Multicore.begin()).
+# Flags match the HW-verified reference image (M4F, hard-float): changing them
+# changes the staged bytes and re-triggers a silicon probe.
+function(teensy_add_cm4_image IMG_NAME)
+    cmake_parse_arguments(CM4 "" "LINKER" "SOURCES" ${ARGN})
+    if(NOT CM4_LINKER)
+        message(FATAL_ERROR "teensy_add_cm4_image(${IMG_NAME}): LINKER <cm4.ld> is required")
+    endif()
+    if(NOT CM4_SOURCES)
+        message(FATAL_ERROR "teensy_add_cm4_image(${IMG_NAME}): SOURCES <...> is required")
+    endif()
+    message(STATUS "teensy_add_cm4_image(${IMG_NAME} LINKER ${CM4_LINKER} SOURCES ${CM4_SOURCES})")
+
+    set(_gcc "${COMPILERPATH}arm-none-eabi-gcc")
+    set(_objcopy "${COMPILERPATH}arm-none-eabi-objcopy")
+    # Cortex-M4F, hard-float — matches the HW-verified cm4_image_test reference.
+    set(_cm4_flags -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+                   -O2 -ffreestanding -fno-common -ffunction-sections
+                   -fdata-sections -Wall -Wextra)
+
+    set(_elf "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.cm4.elf")
+    set(_bin "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.cm4.bin")
+    set(_hdr "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.h")
+
+    # Compile each source to its own object (gcc handles .S as preprocessed asm).
+    set(_objs "")
+    foreach(_src ${CM4_SOURCES})
+        get_filename_component(_abs "${_src}" ABSOLUTE)
+        get_filename_component(_base "${_src}" NAME)
+        set(_obj "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.${_base}.o")
+        add_custom_command(OUTPUT "${_obj}"
+            COMMAND "${_gcc}" ${_cm4_flags} -c "${_abs}" -o "${_obj}"
+            DEPENDS "${_abs}"
+            COMMENT "CM4[${IMG_NAME}] CC ${_base}"
+            VERBATIM)
+        list(APPEND _objs "${_obj}")
+    endforeach()
+
+    get_filename_component(_ld "${CM4_LINKER}" ABSOLUTE)
+    add_custom_command(OUTPUT "${_hdr}"
+        COMMAND "${_gcc}" ${_cm4_flags} -nostdlib -Wl,--gc-sections
+                -T "${_ld}" ${_objs} -o "${_elf}"
+        COMMAND "${_objcopy}" -O binary "${_elf}" "${_bin}"
+        COMMAND ${CMAKE_COMMAND} -DBIN=${_bin} -DNAME=${IMG_NAME} -DOUT=${_hdr}
+                -P "${TEENSY_CMAKE_MACROS_DIR}/cm4_bin2header.cmake"
+        DEPENDS ${_objs} "${_ld}" "${TEENSY_CMAKE_MACROS_DIR}/cm4_bin2header.cmake"
+        COMMENT "CM4[${IMG_NAME}] link + objcopy -> ${IMG_NAME}.h"
+        VERBATIM)
+    add_custom_target(${IMG_NAME}_image DEPENDS "${_hdr}")
+    # Stash the header's directory for teensy_target_link_cm4_image.
+    set_property(GLOBAL PROPERTY TEENSY_CM4_IMAGE_DIR_${IMG_NAME} "${CMAKE_CURRENT_BINARY_DIR}")
+endfunction()
+
+function(teensy_target_link_cm4_image TARGET IMG_NAME)
+    get_property(_dir GLOBAL PROPERTY TEENSY_CM4_IMAGE_DIR_${IMG_NAME})
+    if(NOT _dir)
+        message(FATAL_ERROR "teensy_target_link_cm4_image: no CM4 image '${IMG_NAME}' (call teensy_add_cm4_image first)")
+    endif()
+    add_dependencies(${TARGET}.elf ${IMG_NAME}_image)
+    target_include_directories(${TARGET}.elf PRIVATE "${_dir}")
+endfunction()
