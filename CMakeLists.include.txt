@@ -445,7 +445,8 @@ endmacro(import_arduino_library_git)
 # binary with its OWN startup + linker (NOT the Arduino core, NOT the M7 flags),
 # compiled for cortex-m4 and embedded into the CM7 firmware as a uint32_t array.
 #
-#   teensy_add_cm4_image(<name> LINKER <cm4.ld> SOURCES <a.S> <b.c> ...)
+#   teensy_add_cm4_image(<name> LINKER <cm4.ld> SOURCES <a.S> <b.c> ...
+#                        [INCLUDE_DIRS <dir> ...])
 #       Compiles/links the CM4 image and generates
 #       ${CMAKE_CURRENT_BINARY_DIR}/<name>.h with `static const uint32_t
 #       <name>[]` (the objcopy'd binary). Creates target <name>_image.
@@ -458,7 +459,7 @@ endmacro(import_arduino_library_git)
 # Flags match the HW-verified reference image (M4F, hard-float): changing them
 # changes the staged bytes and re-triggers a silicon probe.
 function(teensy_add_cm4_image IMG_NAME)
-    cmake_parse_arguments(CM4 "" "LINKER" "SOURCES" ${ARGN})
+    cmake_parse_arguments(CM4 "" "LINKER" "SOURCES;INCLUDE_DIRS" ${ARGN})
     if(NOT CM4_LINKER)
         message(FATAL_ERROR "teensy_add_cm4_image(${IMG_NAME}): LINKER <cm4.ld> is required")
     endif()
@@ -473,6 +474,15 @@ function(teensy_add_cm4_image IMG_NAME)
     set(_cm4_flags -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
                    -O2 -ffreestanding -fno-common -ffunction-sections
                    -fdata-sections -Wall -Wextra)
+
+    # Optional include dirs (e.g. a library's shared C core). Compile-only:
+    # images that don't pass INCLUDE_DIRS get byte-identical command lines,
+    # so their .cm4.bin cannot change (2B cmp discipline).
+    set(_cm4_incs "")
+    foreach(_inc ${CM4_INCLUDE_DIRS})
+        get_filename_component(_inc_abs "${_inc}" ABSOLUTE)
+        list(APPEND _cm4_incs "-I${_inc_abs}")
+    endforeach()
 
     set(_elf "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.cm4.elf")
     set(_bin "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.cm4.bin")
@@ -489,7 +499,7 @@ function(teensy_add_cm4_image IMG_NAME)
         # CM4-side sources are covered by the same automated copyleft sweep as
         # the CMake-built CM7 objects.
         add_custom_command(OUTPUT "${_obj}"
-            COMMAND "${_gcc}" ${_cm4_flags} -MMD -MF "${_obj}.d"
+            COMMAND "${_gcc}" ${_cm4_flags} ${_cm4_incs} -MMD -MF "${_obj}.d"
                     -c "${_abs}" -o "${_obj}"
             DEPENDS "${_abs}"
             COMMENT "CM4[${IMG_NAME}] CC ${_base}"
