@@ -484,8 +484,13 @@ function(teensy_add_cm4_image IMG_NAME)
         get_filename_component(_abs "${_src}" ABSOLUTE)
         get_filename_component(_base "${_src}" NAME)
         set(_obj "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.${_base}.o")
+        # -MMD -MF emits <obj>.d beside the object (user headers only, no
+        # codegen change): the evkb license audit walks these depfiles so the
+        # CM4-side sources are covered by the same automated copyleft sweep as
+        # the CMake-built CM7 objects.
         add_custom_command(OUTPUT "${_obj}"
-            COMMAND "${_gcc}" ${_cm4_flags} -c "${_abs}" -o "${_obj}"
+            COMMAND "${_gcc}" ${_cm4_flags} -MMD -MF "${_obj}.d"
+                    -c "${_abs}" -o "${_obj}"
             DEPENDS "${_abs}"
             COMMENT "CM4[${IMG_NAME}] CC ${_base}"
             VERBATIM)
