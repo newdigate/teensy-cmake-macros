@@ -537,3 +537,36 @@ function(teensy_target_link_cm4_image TARGET IMG_NAME)
     add_dependencies(${TARGET}.elf ${IMG_NAME}_image)
     target_include_directories(${TARGET}.elf PRIVATE "${_dir}")
 endfunction()
+
+# teensy_add_cm4_slot_image(IMG_NAME SLOT <k> SLOT_SIZE <bytes> SOURCES <...>
+#                           [INCLUDE_DIRS <...>] [DEFINES <...>])
+# Like teensy_add_cm4_image, but places the image in a fixed, uniform ITCM
+# "slot": generates a linker script from cm4_slot.ld.in with
+#   ORIGIN = 0x1FFE0000 + SLOT*SLOT_SIZE,  LENGTH = SLOT_SIZE
+# then delegates. The matching runtime backdoor stage address is
+#   0x20200000 + SLOT*SLOT_SIZE   (Cm4Slots.h CM4_SLOT_STAGE(SLOT)).
+# SLOT + SLOT_SIZE are the single source of truth binding the linker ORIGIN to
+# the bank stageAddr; pass the SAME SLOT_SIZE as the firmware's -DCM4_SLOT_SIZE.
+# Two images may share a SLOT (they page/evict each other): each gets its own
+# generated <IMG_NAME>.ld with the same ORIGIN.
+function(teensy_add_cm4_slot_image IMG_NAME)
+    cmake_parse_arguments(SLOT "" "SLOT;SLOT_SIZE" "SOURCES;INCLUDE_DIRS;DEFINES" ${ARGN})
+    if(NOT DEFINED SLOT_SLOT)
+        message(FATAL_ERROR "teensy_add_cm4_slot_image(${IMG_NAME}): SLOT <index> is required")
+    endif()
+    if(NOT SLOT_SLOT_SIZE)
+        message(FATAL_ERROR "teensy_add_cm4_slot_image(${IMG_NAME}): SLOT_SIZE <bytes> is required")
+    endif()
+    # CM4 private ITCM base: images relocate their own VTOR here (startup_cm4.S
+    # sets SCB->VTOR = ORIGIN(ITCM)); the CM7 stages into the aliased backdoor.
+    math(EXPR _origin "0x1FFE0000 + ${SLOT_SLOT} * ${SLOT_SLOT_SIZE}" OUTPUT_FORMAT HEXADECIMAL)
+    set(CM4_ITCM_ORIGIN "${_origin}")
+    set(CM4_SLOT_SIZE   "${SLOT_SLOT_SIZE}")
+    set(_ld "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.ld")
+    configure_file("${TEENSY_CMAKE_MACROS_DIR}/cm4_slot.ld.in" "${_ld}" @ONLY)
+    teensy_add_cm4_image(${IMG_NAME}
+        LINKER       "${_ld}"
+        SOURCES      ${SLOT_SOURCES}
+        INCLUDE_DIRS ${SLOT_INCLUDE_DIRS}
+        DEFINES      ${SLOT_DEFINES})
+endfunction()

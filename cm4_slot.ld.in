@@ -1,0 +1,51 @@
+/* GENERATED from cm4_slot.ld.in by teensy_add_cm4_slot_image -- do not edit.
+ * A TCM-resident CM4 image in a fixed ITCM slot: code/vectors in ITCM at
+ * @CM4_ITCM_ORIGIN@ (LENGTH @CM4_SLOT_SIZE@), data in the shared DTCM at
+ * 0x20000000. .data VMA is DTCM but its LMA is appended after .text in ITCM,
+ * so the whole loadable image is contiguous from @CM4_ITCM_ORIGIN@ and
+ * objcopy -O binary yields exactly the bytes to stage at the backdoor alias
+ * (0x20200000 + slot*size). Public domain (author: Nicholas Newdigate). */
+
+MEMORY
+{
+    ITCM (rx) : ORIGIN = @CM4_ITCM_ORIGIN@, LENGTH = @CM4_SLOT_SIZE@
+    DTCM (rw) : ORIGIN = 0x20000000, LENGTH = 128K
+}
+
+__StackTop = ORIGIN(DTCM) + LENGTH(DTCM);   /* 0x20020000: top of CM4 DTCM */
+
+ENTRY(Reset_Handler)
+
+SECTIONS
+{
+    .isr_vector : {
+        . = ALIGN(4);
+        KEEP(*(.isr_vector))
+    } > ITCM
+
+    .text : {
+        . = ALIGN(4);
+        *(.text*)
+        *(.rodata*)
+        . = ALIGN(4);
+    } > ITCM
+
+    /* .data: VMA in DTCM, LMA appended after .text in ITCM. */
+    .data : {
+        . = ALIGN(4);
+        __data_start__ = .;
+        *(.data*)
+        . = ALIGN(4);
+        __data_end__ = .;
+    } > DTCM AT> ITCM
+    __data_load__ = LOADADDR(.data);
+
+    .bss (NOLOAD) : {
+        . = ALIGN(4);
+        __bss_start__ = .;
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
+        __bss_end__ = .;
+    } > DTCM
+}
