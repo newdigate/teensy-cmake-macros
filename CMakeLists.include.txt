@@ -439,6 +439,48 @@ macro(import_arduino_library_git LIB_NAME LIB_URL LIB_BRANCH LIB_PATH)
 
 endmacro(import_arduino_library_git)
 
+# resolve_arduino_library_auto(NAME LOCAL_ROOT URL REF PATH OUT_VAR)
+# Local-first source resolution WITHOUT importing: if LOCAL_ROOT exists, OUT_VAR
+# is set to it (a developer's working checkout wins); otherwise the repo is
+# fetched via CPM (DOWNLOAD_ONLY, shared through CPM_SOURCE_CACHE) and OUT_VAR
+# is set to <fetched>/PATH. Use this when a project cherry-picks individual
+# source files from a library instead of importing it wholesale.
+macro(resolve_arduino_library_auto LIB_NAME LIB_LOCAL_ROOT LIB_URL LIB_REF LIB_PATH OUT_VAR)
+    if(EXISTS "${LIB_LOCAL_ROOT}")
+        message(STATUS "resolve_arduino_library_auto(${LIB_NAME}): local ${LIB_LOCAL_ROOT}")
+        set(${OUT_VAR} "${LIB_LOCAL_ROOT}")
+    else()
+        message(STATUS "resolve_arduino_library_auto(${LIB_NAME}): fetching ${LIB_URL} @ ${LIB_REF}")
+        _teensy_bootstrap_cpm()
+        CPMAddPackage(
+            NAME           ${LIB_NAME}
+            GIT_REPOSITORY ${LIB_URL}
+            GIT_TAG        ${LIB_REF}
+            DOWNLOAD_ONLY  YES
+        )
+        if(DEFINED ${LIB_NAME}_SOURCE_DIR)
+            set(${OUT_VAR} "${${LIB_NAME}_SOURCE_DIR}/${LIB_PATH}")
+        else()
+            string(TOLOWER ${LIB_NAME} _lib_name_lower)
+            set(${OUT_VAR} "${${_lib_name_lower}_SOURCE_DIR}/${LIB_PATH}")
+        endif()
+    endif()
+endmacro(resolve_arduino_library_auto)
+
+# import_arduino_library_auto(NAME LOCAL_ROOT URL REF PATH [subdirs...])
+# Local-first import with a pinned-git fallback: behaves exactly like
+# import_arduino_library(NAME LOCAL_ROOT subdirs...) when the developer's local
+# checkout exists, and exactly like import_arduino_library_git(NAME URL REF
+# PATH subdirs...) when it does not — so the same CMakeLists builds for the
+# library's developer (their working tree, uncommitted edits included) AND for
+# a fresh clone with no sibling checkouts (fetched at the pinned REF).
+# LOCAL_ROOT is the full local path including any sub-path; PATH is the
+# sub-path within the fetched repo ("" for the repo root).
+macro(import_arduino_library_auto LIB_NAME LIB_LOCAL_ROOT LIB_URL LIB_REF LIB_PATH)
+    resolve_arduino_library_auto(${LIB_NAME} "${LIB_LOCAL_ROOT}" "${LIB_URL}" "${LIB_REF}" "${LIB_PATH}" _auto_lib_root)
+    import_arduino_library(${LIB_NAME} "${_auto_lib_root}" ${ARGN})
+endmacro(import_arduino_library_auto)
+
 # --- Dual-core (RT1176) CM4 secondary-image support --------------------------
 # The RT1176 CM7 (main core) can boot a Cortex-M4 secondary core from an image
 # staged into the CM4 TCM backdoor. The CM4 image is a standalone bare-metal
