@@ -27,6 +27,12 @@ SECTIONS
         . = ALIGN(4);
         *(.text*)
         *(.rodata*)
+        /* C++ static constructors: walked by the image's cm4_run_ctors()
+         * (freestanding -nostdlib world, no crt0 — see cm4_cpp_test). */
+        . = ALIGN(4);
+        __init_array_start = .;
+        KEEP(*(.init_array*))
+        __init_array_end = .;
         . = ALIGN(4);
     } > ITCM
 

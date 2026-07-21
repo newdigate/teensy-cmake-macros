@@ -511,11 +511,18 @@ function(teensy_add_cm4_image IMG_NAME)
     message(STATUS "teensy_add_cm4_image(${IMG_NAME} LINKER ${CM4_LINKER} SOURCES ${CM4_SOURCES})")
 
     set(_gcc "${COMPILERPATH}arm-none-eabi-gcc")
+    set(_gxx "${COMPILERPATH}arm-none-eabi-g++")
     set(_objcopy "${COMPILERPATH}arm-none-eabi-objcopy")
     # Cortex-M4F, hard-float — matches the HW-verified cm4_image_test reference.
     set(_cm4_flags -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
                    -O2 -ffreestanding -fno-common -ffunction-sections
                    -fdata-sections -Wall -Wextra)
+    # C++ sources only: freestanding C++ subset for the -nostdlib image world
+    # (no exceptions/RTTI/guards/atexit machinery; static ctors run via the
+    # image's own __init_array walk — see cm4_slot.ld.in and the cm4_cpp_test
+    # gate's runtime_stubs.c). C/.S command lines stay byte-identical.
+    set(_cm4_cxx_flags -fno-exceptions -fno-rtti -fno-threadsafe-statics
+                       -fno-use-cxa-atexit)
 
     # Optional include dirs (e.g. a library's shared C core). Compile-only:
     # images that don't pass INCLUDE_DIRS get byte-identical command lines,
@@ -537,18 +544,29 @@ function(teensy_add_cm4_image IMG_NAME)
     set(_bin "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.cm4.bin")
     set(_hdr "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.h")
 
-    # Compile each source to its own object (gcc handles .S as preprocessed asm).
+    # Compile each source to its own object (gcc handles .S as preprocessed asm;
+    # .cpp/.cc go through g++ with the freestanding-C++ extras). C and .S
+    # command lines are byte-identical to the pre-C++ macro (reproducible-.bin
+    # discipline: a C-only image's .cm4.bin cannot change).
     set(_objs "")
     foreach(_src ${CM4_SOURCES})
         get_filename_component(_abs "${_src}" ABSOLUTE)
         get_filename_component(_base "${_src}" NAME)
         set(_obj "${CMAKE_CURRENT_BINARY_DIR}/${IMG_NAME}.${_base}.o")
+        get_filename_component(_ext "${_src}" LAST_EXT)
+        if(_ext STREQUAL ".cpp" OR _ext STREQUAL ".cc")
+            set(_cm4_cc "${_gxx}")
+            set(_cm4_lang_flags ${_cm4_cxx_flags})
+        else()
+            set(_cm4_cc "${_gcc}")
+            set(_cm4_lang_flags "")
+        endif()
         # -MMD -MF emits <obj>.d beside the object (user headers only, no
         # codegen change): the evkb license audit walks these depfiles so the
         # CM4-side sources are covered by the same automated copyleft sweep as
         # the CMake-built CM7 objects.
         add_custom_command(OUTPUT "${_obj}"
-            COMMAND "${_gcc}" ${_cm4_flags} ${_cm4_incs} ${_cm4_defs} -MMD -MF "${_obj}.d"
+            COMMAND "${_cm4_cc}" ${_cm4_flags} ${_cm4_lang_flags} ${_cm4_incs} ${_cm4_defs} -MMD -MF "${_obj}.d"
                     -c "${_abs}" -o "${_obj}"
             DEPENDS "${_abs}"
             COMMENT "CM4[${IMG_NAME}] CC ${_base}"
