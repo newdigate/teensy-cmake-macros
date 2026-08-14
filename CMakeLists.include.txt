@@ -676,8 +676,12 @@ function(teensy_add_cm4_slot_image IMG_NAME)
 endfunction()
 
 # --- COREPATH fallback (see the note near the top of this file) --------------
-# Pinned: an unpinned `master` fetch here cost every non-consumer-configured
-# build a fresh clone per build dir and made test results time-dependent.
+# Pinned: the old `master` fetch made results time-dependent (and re-cloned
+# per build dir; CPM_SOURCE_CACHE is what shares the clone). Bumping the pin:
+# push teensy-cores, paste the new SHA here. NOTE: `teensy_cores` is thereby a
+# RESERVED manifest name for consumers that reach this fallback — a later
+# teensy_declare_library(teensy_cores ...) is silently ignored (the resolve is
+# memoized); consumers wanting a different core must set COREPATH pre-include.
 if (NOT DEFINED COREPATH)
     teensy_declare_library(teensy_cores teensy-cores
         https://github.com/newdigate/teensy-cores
@@ -686,5 +690,7 @@ if (NOT DEFINED COREPATH)
     # Back-compat: consumers (tests/basic among them) read this variable, which
     # FetchContent_MakeAvailable used to export.
     set(teensy_cores_SOURCE_DIR "${_teensy_cores_root}")
+    # Plain variable on purpose — CACHE PATH would strip the trailing slash
+    # that "${COREPATH}<board>.ld" concatenation depends on.
     set(COREPATH "${teensy_cores_SOURCE_DIR}/teensy4/")
 endif()
