@@ -9,6 +9,8 @@ set(TEENSY_CMAKE_MACROS_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "teensy-c
 # local-first side of every declared library below, and of the COREPATH
 # fallback at the end of this file). Respect a value the consumer already set
 # (variable or -D), else the TEENSY_LIB_ROOT env var, else ~/Development.
+# The env var is read at first configure only — the cached value wins on
+# reconfigure (override with -DTEENSY_LIB_ROOT=...).
 if(NOT DEFINED TEENSY_LIB_ROOT)
     if(DEFINED ENV{TEENSY_LIB_ROOT})
         set(TEENSY_LIB_ROOT "$ENV{TEENSY_LIB_ROOT}" CACHE PATH "root for sibling Arduino library checkouts")
@@ -492,8 +494,9 @@ endmacro()
 
 # teensy_resolve_library(NAME OUT_VAR): resolve a declared library's source
 # directory — local-first under TEENSY_LIB_ROOT, else CPM at the pinned REF
-# (DOWNLOAD_ONLY, shared through CPM_SOURCE_CACHE). Memoized per configure.
-# TEENSY_FORCE_FETCH=ON skips the local checkout (fresh-user simulation).
+# (DOWNLOAD_ONLY, shared through CPM_SOURCE_CACHE). Memoized per directory
+# scope per configure. TEENSY_FORCE_FETCH=ON skips the local checkout
+# (fresh-user simulation).
 macro(teensy_resolve_library LIB_NAME OUT_VAR)
     if(NOT DEFINED TEENSY_LIB_${LIB_NAME}_URL)
         message(FATAL_ERROR "teensy_resolve_library(${LIB_NAME}): not declared via teensy_declare_library")
