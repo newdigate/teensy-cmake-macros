@@ -94,7 +94,7 @@ It's a work in progress — check its [issues](https://github.com/newdigate/conv
 | `teensy_add_library(TARGET srcs…)` | builds a static library, target named `TARGET.o`. |
 | `import_arduino_library(NAME ROOT [subdirs…])` | adds a library from a **local** path and builds it. |
 | `import_arduino_library_git(NAME URL BRANCH PATH [subdirs…])` | fetches a library from **git** (via CPM) and builds it. `PATH` is the source subdir (`""` = repo root); extra `subdirs` are added as well. |
-| `teensy_declare_library(NAME SUBDIR URL REF PATH)` | registers `NAME` for resolution by name alone. `SUBDIR` is relative to `TEENSY_LIB_ROOT` (the local checkout); `PATH` is the subdir inside the fetched repo (`.` = repo root). |
+| `teensy_declare_library(NAME SUBDIR URL REF PATH)` | registers `NAME` for resolution by name alone. `SUBDIR` is relative to `TEENSY_LIB_ROOT` (the local checkout, sub-path included — e.g. `FNET/src`); `PATH` is the subdir inside the fetched repo (`.` = repo root). |
 | `teensy_resolve_library(NAME OUT_VAR)` | resolves a declared library's source dir into `OUT_VAR` — **local-first** under `TEENSY_LIB_ROOT`, else CPM at the pinned `REF`. For cherry-picking individual files instead of importing the whole library. |
 | `teensy_import_library(NAME [subdirs…])` | `teensy_resolve_library` + `import_arduino_library` in one call — the declared-library equivalent of `import_arduino_library_git`. |
 | `teensy_target_link_libraries(TARGET libs…)` | links libraries into `TARGET.elf`. **Order does not matter** — the libraries are wrapped in a linker group that re-scans until every cross-reference resolves (circular deps included). |
@@ -132,13 +132,13 @@ macros.
 
 ## Dependency caching
 
-Git libraries (`import_arduino_library_git`) are fetched with [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), bootstrapped automatically the first time you use one. By default each build directory clones its own copy. Set the `CPM_SOURCE_CACHE` environment variable to clone each `(repo, branch)` **once** and share it across every project and build directory:
+Git libraries (`import_arduino_library_git`) are fetched with [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), bootstrapped automatically on first use — which may be the `COREPATH` fallback resolving `teensy-cores`, not necessarily an explicit git library. By default each build directory clones its own copy. Set the `CPM_SOURCE_CACHE` environment variable to clone each `(repo, branch)` **once** and share it across every project and build directory:
 
 ```shell
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 
-The cache is keyed by repo + branch, so different branches of the same library coexist without clobbering each other, while identical pins are downloaded only once. Declared libraries (`teensy_declare_library`) share the same cache. Projects that use only `import_arduino_library` (local paths) never download CPM.
+The cache is keyed by repo + branch, so different branches of the same library coexist without clobbering each other, while identical pins are downloaded only once. Declared libraries (`teensy_declare_library`) share the same cache. Projects that use only `import_arduino_library` (local paths) never download CPM — unless the core fallback needs it (no local `teensy-cores` checkout and no consumer-supplied `COREPATH`).
 
 ## Linking the C++ standard library
 
