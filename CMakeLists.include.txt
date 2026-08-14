@@ -5,6 +5,17 @@ include(FetchContent)
 # locate sibling helper scripts (CMAKE_CURRENT_LIST_DIR inside a function body
 # resolves to the *caller's* list file, not this one).
 set(TEENSY_CMAKE_MACROS_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "teensy-cmake-macros dir")
+# TEENSY_LIB_ROOT: the directory that holds sibling library checkouts (the
+# local-first side of every declared library below, and of the COREPATH
+# fallback at the end of this file). Respect a value the consumer already set
+# (variable or -D), else the TEENSY_LIB_ROOT env var, else ~/Development.
+if(NOT DEFINED TEENSY_LIB_ROOT)
+    if(DEFINED ENV{TEENSY_LIB_ROOT})
+        set(TEENSY_LIB_ROOT "$ENV{TEENSY_LIB_ROOT}" CACHE PATH "root for sibling Arduino library checkouts")
+    else()
+        set(TEENSY_LIB_ROOT "$ENV{HOME}/Development" CACHE PATH "root for sibling Arduino library checkouts")
+    endif()
+endif()
 # COREPATH may be supplied by the consumer (e.g. the imxrt1176 core lives in a
 # local repo, not the fetched teensy-cores fork). Only fetch the Teensy 4 core
 # and default COREPATH to it when the consumer has not already set COREPATH.
@@ -466,6 +477,45 @@ macro(resolve_arduino_library_auto LIB_NAME LIB_LOCAL_ROOT LIB_URL LIB_REF LIB_P
         endif()
     endif()
 endmacro(resolve_arduino_library_auto)
+
+# --- declared-library manifest layer -----------------------------------------
+# teensy_declare_library(NAME SUBDIR URL REF PATH): register NAME so it can be
+# resolved by name alone. SUBDIR is relative to TEENSY_LIB_ROOT (the local
+# checkout, sub-path included, e.g. "FNET/src"); PATH is the sub-path inside
+# the fetched repo ("." for the repo root).
+macro(teensy_declare_library LIB_NAME LIB_SUBDIR LIB_URL LIB_REF LIB_PATH)
+    set(TEENSY_LIB_${LIB_NAME}_SUBDIR "${LIB_SUBDIR}")
+    set(TEENSY_LIB_${LIB_NAME}_URL    "${LIB_URL}")
+    set(TEENSY_LIB_${LIB_NAME}_REF    "${LIB_REF}")
+    set(TEENSY_LIB_${LIB_NAME}_PATH   "${LIB_PATH}")
+endmacro()
+
+# teensy_resolve_library(NAME OUT_VAR): resolve a declared library's source
+# directory — local-first under TEENSY_LIB_ROOT, else CPM at the pinned REF
+# (DOWNLOAD_ONLY, shared through CPM_SOURCE_CACHE). Memoized per configure.
+# TEENSY_FORCE_FETCH=ON skips the local checkout (fresh-user simulation).
+macro(teensy_resolve_library LIB_NAME OUT_VAR)
+    if(NOT DEFINED TEENSY_LIB_${LIB_NAME}_URL)
+        message(FATAL_ERROR "teensy_resolve_library(${LIB_NAME}): not declared via teensy_declare_library")
+    endif()
+    if(NOT DEFINED _teensy_resolved_${LIB_NAME})
+        if(TEENSY_FORCE_FETCH)
+            set(_teensy_local "${TEENSY_LIB_ROOT}/.force-fetch-no-local")
+        else()
+            set(_teensy_local "${TEENSY_LIB_ROOT}/${TEENSY_LIB_${LIB_NAME}_SUBDIR}")
+        endif()
+        resolve_arduino_library_auto(${LIB_NAME} "${_teensy_local}"
+            "${TEENSY_LIB_${LIB_NAME}_URL}" "${TEENSY_LIB_${LIB_NAME}_REF}"
+            "${TEENSY_LIB_${LIB_NAME}_PATH}" _teensy_resolved_${LIB_NAME})
+    endif()
+    set(${OUT_VAR} "${_teensy_resolved_${LIB_NAME}}")
+endmacro()
+
+# teensy_import_library(NAME [subdirs...]): resolve + import_arduino_library.
+macro(teensy_import_library LIB_NAME)
+    teensy_resolve_library(${LIB_NAME} _teensy_import_dir)
+    import_arduino_library(${LIB_NAME} "${_teensy_import_dir}" ${ARGN})
+endmacro()
 
 # import_arduino_library_auto(NAME LOCAL_ROOT URL REF PATH [subdirs...])
 # Local-first import with a pinned-git fallback: behaves exactly like
