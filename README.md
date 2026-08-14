@@ -113,6 +113,18 @@ import_arduino_library_git(TeensyGFX   https://github.com/newdigate/teensy-gfx.g
 ```
 </details>
 
+## Declared libraries (local-first, pinned fallback)
+
+`teensy_declare_library(NAME <subdir-under-TEENSY_LIB_ROOT> URL REF <sub-path>)`
+registers a library once; `teensy_import_library(NAME [subdirs...])` (or
+`teensy_resolve_library(NAME OUT_VAR)` for cherry-picking) then resolves it
+**local-first**: a checkout at `${TEENSY_LIB_ROOT}/<subdir>` wins — working
+tree, uncommitted edits included — else the repo is fetched with CPM at the
+pinned `REF`. `TEENSY_LIB_ROOT` defaults to `$HOME/Development` (env var or
+CMake variable to override); `-DTEENSY_FORCE_FETCH=ON` ignores local checkouts
+(fresh-user simulation). The `COREPATH` fallback resolves `teensy-cores` the
+same way — pinned, not `master`.
+
 ## Dependency caching
 
 Git libraries (`import_arduino_library_git`) are fetched with [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), bootstrapped automatically the first time you use one. By default each build directory clones its own copy. Set the `CPM_SOURCE_CACHE` environment variable to clone each `(repo, branch)` **once** and share it across every project and build directory:
@@ -121,7 +133,7 @@ Git libraries (`import_arduino_library_git`) are fetched with [CPM.cmake](https:
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 
-The cache is keyed by repo + branch, so different branches of the same library coexist without clobbering each other, while identical pins are downloaded only once. Projects that use only `import_arduino_library` (local paths) never download CPM.
+The cache is keyed by repo + branch, so different branches of the same library coexist without clobbering each other, while identical pins are downloaded only once. Declared libraries (`teensy_declare_library`) share the same cache. Projects that use only `import_arduino_library` (local paths) never download CPM.
 
 ## Linking the C++ standard library
 
