@@ -41,7 +41,7 @@ set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_C_COMPILER} <FLAGS> <CMAKE_CXX_LINK_FLAGS
 
 ### 2. `CMakeLists.txt`
 
-The macros — and the Teensy 4 core — are pulled in with `FetchContent`; you don't clone anything by hand:
+The macros are pulled in with `FetchContent`; the Teensy 4 core resolves local-first under `TEENSY_LIB_ROOT`, else CPM fetches it at a pinned SHA — either way, you don't clone anything by hand:
 
 ```cmake
 cmake_minimum_required(VERSION 3.24)
@@ -54,7 +54,7 @@ FetchContent_Declare(teensy_cmake_macros
 FetchContent_MakeAvailable(teensy_cmake_macros)
 include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
 
-# the Teensy 4 core (fetched automatically into ${teensy_cores_SOURCE_DIR})
+# the Teensy 4 core (resolved automatically; ${teensy_cores_SOURCE_DIR} points at it)
 import_arduino_library(cores ${teensy_cores_SOURCE_DIR}/teensy4 avr util)
 
 # Arduino libraries, straight from git (see "Dependency caching" below)
@@ -94,6 +94,9 @@ It's a work in progress — check its [issues](https://github.com/newdigate/conv
 | `teensy_add_library(TARGET srcs…)` | builds a static library, target named `TARGET.o`. |
 | `import_arduino_library(NAME ROOT [subdirs…])` | adds a library from a **local** path and builds it. |
 | `import_arduino_library_git(NAME URL BRANCH PATH [subdirs…])` | fetches a library from **git** (via CPM) and builds it. `PATH` is the source subdir (`""` = repo root); extra `subdirs` are added as well. |
+| `teensy_declare_library(NAME SUBDIR URL REF PATH)` | registers `NAME` for resolution by name alone. `SUBDIR` is relative to `TEENSY_LIB_ROOT` (the local checkout); `PATH` is the subdir inside the fetched repo (`.` = repo root). |
+| `teensy_resolve_library(NAME OUT_VAR)` | resolves a declared library's source dir into `OUT_VAR` — **local-first** under `TEENSY_LIB_ROOT`, else CPM at the pinned `REF`. For cherry-picking individual files instead of importing the whole library. |
+| `teensy_import_library(NAME [subdirs…])` | `teensy_resolve_library` + `import_arduino_library` in one call — the declared-library equivalent of `import_arduino_library_git`. |
 | `teensy_target_link_libraries(TARGET libs…)` | links libraries into `TARGET.elf`. **Order does not matter** — the libraries are wrapped in a linker group that re-scans until every cross-reference resolves (circular deps included). |
 | `teensy_include_directories(paths…)` | adds extra include directories. |
 
@@ -123,7 +126,9 @@ tree, uncommitted edits included — else the repo is fetched with CPM at the
 pinned `REF`. `TEENSY_LIB_ROOT` defaults to `$HOME/Development` (env var or
 CMake variable to override); `-DTEENSY_FORCE_FETCH=ON` ignores local checkouts
 (fresh-user simulation). The `COREPATH` fallback resolves `teensy-cores` the
-same way — pinned, not `master`.
+same way — pinned, not `master`. `teensy_cores` is reserved by the `COREPATH`
+fallback — to use a different core, set `COREPATH` before including the
+macros.
 
 ## Dependency caching
 

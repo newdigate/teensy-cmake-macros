@@ -33,7 +33,7 @@ There is no installer and no build step for the package itself — `CMakeLists.i
    include(${teensy_cmake_macros_SOURCE_DIR}/CMakeLists.include.txt)
    ```
    They then call the macros from their own `CMakeLists.txt`, configured with a Teensy toolchain file.
-2. **The macros file fetches the Teensy 4 core itself.** On `include()` it `FetchContent`s `newdigate/teensy-cores` (a fork of `PaulStoffregen/cores` that adds the RT1060-EVKB board) and defaults `COREPATH` to `${teensy_cores_SOURCE_DIR}/teensy4/`. Consumers do not have to clone the core. Individual Arduino libraries are fetched per-library (see `import_arduino_library_git`).
+2. **The core resolves through the declared-library layer, not a direct fetch.** `COREPATH` defaults to `${teensy_cores_SOURCE_DIR}/teensy4/`, resolved local-first under `TEENSY_LIB_ROOT` (a `teensy-cores` checkout wins) — else CPM fetches `newdigate/teensy-cores` (a fork of `PaulStoffregen/cores` that adds the RT1060-EVKB board) at a pinned SHA. Consumers do not have to clone the core. Individual Arduino libraries are fetched per-library (see `import_arduino_library_git`).
 
 **Critical workflow consequence:** consumers pin `GIT_TAG main`, so they fetch the macros from GitHub, *not* from your local working tree. To test local edits to `CMakeLists.include.txt` against a consumer build, redirect FetchContent at your checkout:
 ```shell
@@ -57,7 +57,7 @@ Compile flags and include dirs are carried on a single `teensy_flags` `INTERFACE
 
 ## Required variables (set in the consumer toolchain file)
 
-`TEENSY_VERSION` (40, 41, or 42 for the RT1060-EVKB), `CPU_CORE_SPEED`, `COMPILERPATH` (arm-none-eabi bin dir, trailing slash). `COREPATH` defaults to the fetched core and only needs overriding if you supply your own. Consumers normally write their own toolchain file (see the README quick-start); the repo ships one example:
+`TEENSY_VERSION` (40, 41, or 42 for the RT1060-EVKB), `CPU_CORE_SPEED`, `COMPILERPATH` (arm-none-eabi bin dir, trailing slash). `COREPATH` defaults to the resolved core (local-first, else pinned fetch) and only needs overriding if you supply your own. Consumers normally write their own toolchain file (see the README quick-start); the repo ships one example:
 
 - `tests/teensy41.toolchain.cmake` — `TEENSY_VERSION 41`, `--specs=nosys.specs`, `COMPILERPATH` hardcoded to the CI path `/opt/gcc-arm-none-eabi-9-2019-q4-major/bin/` (a macOS `/Applications/ARM/bin/` alternative is commented out). Edit `COMPILERPATH` for your machine.
 
@@ -77,7 +77,7 @@ To exercise local macro edits, add `-DFETCHCONTENT_SOURCE_DIR_TEENSY_CMAKE_MACRO
 
 ## Tests & CI
 
-Each subdir of `tests/` (`basic`, `spi`, `audio`, `eeprom`, `vector`) is an independent consumer project with its own `CMakeLists.txt`, exercising a different dependency set; each fetches the macros, the core, and its libraries via `FetchContent`.
+Each subdir of `tests/` (`basic`, `spi`, `audio`, `eeprom`, `vector`) is an independent consumer project with its own `CMakeLists.txt`, exercising a different dependency set; each fetches the macros via `FetchContent`, resolves the core through the declared-library layer's pinned local-first fallback, and pulls in its own libraries via `import_arduino_library_git`.
 
 GitHub Actions has one workflow per test in `.github/workflows/` (`audio-test`, `basic-test`, `eeprom-test`, `spi-test`, `vector`). Each checks out the repo, downloads the ARM 9-2019-q4 toolchain to `/opt`, then configures+builds that one test with a toolchain file. Dependencies come from `FetchContent`, not a manual `deps/` clone.
 
@@ -85,4 +85,4 @@ GitHub Actions has one workflow per test in `.github/workflows/` (`audio-test`, 
 
 ## Runtime dependencies
 
-Consumer firmware needs the Teensy 4 core (fetched automatically) plus whatever PaulStoffregen Arduino libraries the sketch uses — pulled in per-library with `import_arduino_library_git` (from a git URL) or `import_arduino_library` (from a local path). Consumers with a stable library set should prefer `teensy_declare_library` + `teensy_import_library` — local-first under `TEENSY_LIB_ROOT` (default `~/Development`), pinned CPM fallback. Commonly: `Audio`, `SD` (branch `Juse_Use_SdFat`), `Wire`, `SPI`, `SerialFlash`, `arm_math`, `greiman/SdFat`. See each test's `CMakeLists.txt` for the exact repo/branch it uses. These git libraries are fetched via CPM.cmake; set the `CPM_SOURCE_CACHE` env var (e.g. `~/.cache/CPM`) to share one clone of each `(repo, branch)` across all projects and build dirs instead of re-cloning per build dir.
+Consumer firmware needs the Teensy 4 core (resolved automatically — local-first, else pinned fetch) plus whatever PaulStoffregen Arduino libraries the sketch uses — pulled in per-library with `import_arduino_library_git` (from a git URL) or `import_arduino_library` (from a local path). Consumers with a stable library set should prefer `teensy_declare_library` + `teensy_import_library` — local-first under `TEENSY_LIB_ROOT` (default `~/Development`), pinned CPM fallback. Commonly: `Audio`, `SD` (branch `Juse_Use_SdFat`), `Wire`, `SPI`, `SerialFlash`, `arm_math`, `greiman/SdFat`. See each test's `CMakeLists.txt` for the exact repo/branch it uses. These git libraries are fetched via CPM.cmake; set the `CPM_SOURCE_CACHE` env var (e.g. `~/.cache/CPM`) to share one clone of each `(repo, branch)` across all projects and build dirs instead of re-cloning per build dir.
