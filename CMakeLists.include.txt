@@ -18,20 +18,11 @@ if(NOT DEFINED TEENSY_LIB_ROOT)
         set(TEENSY_LIB_ROOT "$ENV{HOME}/Development" CACHE PATH "root for sibling Arduino library checkouts")
     endif()
 endif()
-# COREPATH may be supplied by the consumer (e.g. the imxrt1176 core lives in a
-# local repo, not the fetched teensy-cores fork). Only fetch the Teensy 4 core
-# and default COREPATH to it when the consumer has not already set COREPATH.
-# This keeps the TEENSY_VERSION 40/41/42 path unchanged while letting the 117
-# (RT1170-EVKB) profile point COREPATH/LINKER_FILE at its own local core.
-if (NOT DEFINED COREPATH)
-    FetchContent_Declare(teensy_cores
-            GIT_REPOSITORY https://github.com/newdigate/teensy-cores
-            GIT_TAG        master
-    )
-    FetchContent_MakeAvailable(teensy_cores)
-    # * core path will be set as below by default. you can change if necessary
-    set(COREPATH "${teensy_cores_SOURCE_DIR}/teensy4/")
-endif()
+# COREPATH may be supplied by the consumer (e.g. the RT1170-EVKB tree points it
+# at its own resolved core). When the consumer has not set it, the fallback at
+# the END of this file resolves teensy-cores through the declared-library layer
+# (local-first under TEENSY_LIB_ROOT, else CPM at a pinned ref) — it lives at
+# the end because it calls macros defined below.
 
 if (APPLE)
     set(CMAKE_OSX_SYSROOT "")
@@ -683,3 +674,17 @@ function(teensy_add_cm4_slot_image IMG_NAME)
         INCLUDE_DIRS ${SLOT_INCLUDE_DIRS}
         DEFINES      ${SLOT_DEFINES})
 endfunction()
+
+# --- COREPATH fallback (see the note near the top of this file) --------------
+# Pinned: an unpinned `master` fetch here cost every non-consumer-configured
+# build a fresh clone per build dir and made test results time-dependent.
+if (NOT DEFINED COREPATH)
+    teensy_declare_library(teensy_cores teensy-cores
+        https://github.com/newdigate/teensy-cores
+        5bcae781b6c0e451f073298ddf7e1cd859f3e4de .)
+    teensy_resolve_library(teensy_cores _teensy_cores_root)
+    # Back-compat: consumers (tests/basic among them) read this variable, which
+    # FetchContent_MakeAvailable used to export.
+    set(teensy_cores_SOURCE_DIR "${_teensy_cores_root}")
+    set(COREPATH "${teensy_cores_SOURCE_DIR}/teensy4/")
+endif()
